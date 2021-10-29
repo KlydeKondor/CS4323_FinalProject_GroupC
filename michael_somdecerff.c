@@ -8,8 +8,72 @@
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
+#include "readWriteLock.h"
 #include "socketConnection.h"
 #include "util.h"
+
+///////////////////////////////////////////////
+//
+// ReadWriteLock.h
+//
+///////////////////////////////////////////////
+struct RWLock_t* mallocRWLock(enum LockMode mode) {
+    struct RWLock_t* lock = malloc(sizeof(struct RWLock_t));
+    lock->readCount = 0;
+
+    if(sem_init(&lock->readCountLock, mode, 1) == -1) {
+        printf("[mallocRWLock] Init of readCountLock failed");
+        exit(1);
+    }
+
+    if(sem_init(&lock->writeLock, mode, 1) == -1) {
+        printf("[mallocRWLock] Init of writeLock failed");
+        exit(1);
+    }
+
+    return lock;
+}
+
+void readLock(struct RWLock_t* lock) {
+    assert(lock != NULL);
+
+    sem_wait(&lock->readCountLock);
+    lock->readCount++;
+    if(lock->readCount == 1) {
+        sem_wait(&lock->writeLock);
+    }
+    sem_post(&lock->readCountLock);
+}
+
+void readUnlock(struct RWLock_t* lock) {
+    assert(lock != NULL);
+
+    sem_wait(&lock->readCountLock);
+    lock->readCount--;
+    if(lock->readCount == 0) {
+        sem_post(&lock->writeLock);
+    }
+    sem_post(&lock->readCountLock);
+}
+
+void writeLock(struct RWLock_t* lock) {
+    assert(lock != NULL);
+    sem_wait(&lock->writeLock);
+}
+
+void writeUnlock(struct RWLock_t* lock) {
+    assert(lock != NULL);
+    sem_post(&lock->writeLock);
+}
+
+void freeRWLock(struct RWLock_t* lock) {
+    assert(lock != NULL);
+
+    sem_destroy(&lock->readCountLock);
+    sem_destroy(&lock->writeLock);
+    free(lock);
+    lock = NULL;
+}
 
 ///////////////////////////////////////////////
 //
