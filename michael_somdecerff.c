@@ -149,7 +149,7 @@ void connectSocket(const struct socket_t* socket, int maxRetryAttempt, float bac
                 float backoff = backoffFactor * (float)(i + 1);
                 printf("Failed to connect, backoff waiting %.2f seconds\n", backoff);
                 // For some reason usleep doesn't work here?
-                sleep(MILLISECONDS_PER_SECOND * backoff);
+                sleep(backoff);
                 continue;
             }
             else {
