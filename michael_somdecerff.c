@@ -223,3 +223,36 @@ struct sockaddr_in addressAndPort(const char* address, int port) {
 void seedRand() {
     srand(time(NULL));
 }
+
+char** str_split(const char* toSplit, char* delim, int* count) {
+    assert(toSplit != NULL);
+    assert(delim > 0);
+    assert(count != NULL);
+
+    char** result = malloc(sizeof(char*));
+    int splitCount = 0;
+
+    // Copy string to new memory location
+    char* str = mallocString(strlen(toSplit));
+    strcpy(str, toSplit);
+
+    char* split = strtok(str, delim);
+    while(split != NULL) {
+        result[splitCount] = mallocString(strlen(split));
+        strcpy(result[splitCount], split);
+        splitCount++;
+
+        result = realloc(result, (splitCount + 1) * sizeof(char*));
+        if(result == NULL) {
+            printf("[str_split] realloc failed\n");
+            exit(1);
+        }
+
+        split = strtok(NULL, delim);
+    }
+
+    free(str);
+    *count = splitCount;
+
+    return result;
+}

@@ -23,4 +23,14 @@ struct sockaddr_in addressAndPort(const char* address, int port);
  */
 void seedRand();
 
+/**
+ * Splits a given string into pieces around a delimiter
+ *
+ * @param toSplit string to split
+ * @param delim string representing the delimiter to split on
+ * @param count the number of segments the string was split into
+ * @return a allocated char pointer to a char pointer array containing the split string parts
+ */
+char** str_split(const char* toSplit, char* delim, int* count);
+
 #endif //UTIL_H

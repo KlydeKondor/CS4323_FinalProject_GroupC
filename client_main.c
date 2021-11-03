@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#import "serverNetwork.h"
+#include "serverNetwork.h"
 #include "socketConnection.h"
 
 int main(int argc, char **argv) {
