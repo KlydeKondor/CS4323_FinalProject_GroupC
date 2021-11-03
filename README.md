@@ -26,3 +26,21 @@ Compiles just the client
 ```commandline
 make client
 ```
+
+# Running
+## Data Server
+```commandline
+./dataServer.out
+```
+
+## Server
+Which port is the server will open on
+```commandline
+./server.out <port>
+```
+
+## Client
+Which port the client will connect to. Must match an open server port
+```commandline
+./client.out <port>
+```

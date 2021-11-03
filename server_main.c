@@ -1,6 +1,9 @@
 #include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "dataServerNetwork.h"
 #include "serverNetwork.h"
+#include "serverToDataserverAPI.h"
 #include "socketConnection.h"
 
 _Noreturn void* serverListenHandle(void* data) {
@@ -14,13 +17,27 @@ _Noreturn void* serverListenHandle(void* data) {
     }
 }
 
-int main() {
+int main(int argc, char **argv) {
+    // Parse server port
+    if(argc < 1) {
+        printf("Port argument missing\nUsage: ./server.out <port>\n");
+        exit(1);
+    }
+    long port;
+    char* other;
+    if((port = strtol(argv[0], &other, 10)) == 0) {
+        if(port > (1 << 16)) { //Max port: 65536
+            printf("Port outside of valid range 0 < port < 65536\n");
+            exit(1);
+        }
+    }
+
     // Connect to the data server
     struct socket_t* dataServerSocket = mallocSocket(DATA_SERVER_ADDRESS, DATA_SERVER_PORT);
     connectSocket(dataServerSocket, 5, 2);
 
     // Setup listen socket to handle incoming client connections
-    struct socket_t* serverSocket = mallocSocket(SERVER_ADDRESS, SERVER_PORT);
+    struct socket_t* serverSocket = mallocSocket(SERVER_ADDRESS, port);
     bindSocket(serverSocket);
     listenSocket(serverSocket, 3);
 
