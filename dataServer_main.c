@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include "dataServerNetwork.h"
 #include "socketConnection.h"
+#include "util.h"
 
 _Noreturn void* serverListenHandle(void* data) {
     struct socket_t* clientServerSocket = (struct socket_t*) data;
@@ -13,6 +14,7 @@ _Noreturn void* serverListenHandle(void* data) {
 }
 
 int main() {
+    seedRand();
     // Setup listening socket for server connection
     struct socket_t* dataServerSocket = mallocSocket(DATA_SERVER_ADDRESS, DATA_SERVER_PORT);
     bindSocket(dataServerSocket);

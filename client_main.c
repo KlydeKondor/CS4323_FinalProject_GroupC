@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include "serverNetwork.h"
 #include "socketConnection.h"
+#include "util.h"
 
 int main(int argc, char **argv) {
+    seedRand();
     // Parse server port
     if(argc < 1) {
         printf("Port argument missing\nUsage: ./client.out <port>\n");
