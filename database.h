@@ -84,10 +84,11 @@ int findUpdateRow(FILE* fDB, const char* whereVal, int whereCol) {
 		strcpy(dbVal, strtok(getVal, separator));
 		
 		// Check each column
-		while (dbVal != NULL && dbVal[0] != '\n' && dbVal[0] != '|') {
+		while (curCol <= whereCol && dbVal != NULL && dbVal[0] != '\n' && dbVal[0] != '|') {
 			// Check dbVal vs whereVal
 			if (curCol == whereCol && strcmp(dbVal, whereVal) == 0) {
 				// Skip finding the next row; this is the final row
+				printf("Column %d: DB - %s ### Search - %s\n", curCol, dbVal, whereVal);
 				goto found;
 			}
 			else if (dbVal != NULL) {
