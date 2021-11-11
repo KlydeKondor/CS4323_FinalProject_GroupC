@@ -7,6 +7,9 @@
 #include "socketConnection.h"
 #include "util.h"
 
+// Kyle: Test cases for Hunter
+#include "HunterHolstead.h"
+
 #define PACKED_DATA_SIZE 2
 #define CLIENT_SOCKET 0
 #define SERVER_SOCKET 1
@@ -21,6 +24,7 @@ _Noreturn void* serverListenHandle(void* data) {
         readSocket(clientSocket, buffer);
 
         // Handling of client traffic will go here
+		RegisterClient();
     }
 
     freeSocket(clientSocket);

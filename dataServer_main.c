@@ -3,13 +3,16 @@
 #include "socketConnection.h"
 #include "util.h"
 
+// Kyle: Test cases for Kyle
+#include "database.h"
+
 _Noreturn void* serverListenHandle(void* data) {
     struct socket_t* clientServerSocket = (struct socket_t*) data;
 
     while(1) {
         char buffer[MAX_TCP_BUFFER_SIZE];
         readSocket(clientServerSocket, buffer);
-
+		
     }
 }
 
@@ -19,7 +22,14 @@ int main() {
     struct socket_t* dataServerSocket = mallocSocket(DATA_SERVER_ADDRESS, DATA_SERVER_PORT);
     bindSocket(dataServerSocket);
     listenSocket(dataServerSocket, 3);
-
+	
+	// Kyle's test cases (location is temporary)
+	char dummyData[] = "5|Jane Doe|555-867-5309|123 Address Road|";
+	registerClient(dummyData, 1); // INSERT
+	
+	char dummyUpdate[] = "5|tesT|Dadt|Foo|";
+	updateClient(dummyUpdate, 1); // UPDATE
+	
     while(1) {
         // Accept incoming server connection and pass it off to a thread
         struct socket_t* acceptedSocket = acceptSocket(dataServerSocket);
