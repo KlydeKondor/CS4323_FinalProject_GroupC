@@ -62,7 +62,26 @@ struct customerOrder {
 	char* contactAddress;
 };
 
-int findAndReplaceRow(FILE* fDB, const char* dbName, const char* whereVal, int whereCol, const char* newRow) {
+void getTempName(char* dbTemp, const char* prefix, const char* tbl) {
+	// Concatenate the prefix and the DB name, and store in dbTemp
+	for (int i = 0, j = 0; i < strlen(prefix) + strlen(tbl) + 1; i++) {
+		if (i < strlen(prefix)) {
+			// Place the prefix
+			dbTemp[i] = prefix[i];
+		}
+		else if (i < strlen(prefix) + strlen(tbl)) {
+			// Place the existing filename
+			dbTemp[i] = tbl[j];
+			j++;
+		}
+		else {
+			// Place the terminating null character
+			dbTemp[i] = '\0';
+		}
+	}
+}
+
+int findAndReplaceRow(FILE* fDB, const char* dbName, const char* whereVal, int whereCol, const char* newRow, int cmd) {
 	// Pointer to a new file which will eventually overwrite the original DB
 	printf("Temp DB name is %s\n", dbName);
 	FILE* fNewDB = fopen(dbName, "w");
@@ -94,8 +113,13 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, const char* whereVal, int w
 			if (curCol == whereCol && strcmp(dbVal, whereVal) == 0) {
 				// Place setVal instead of the existing row
 				printf("Column %d: DB - %s ### Search - %s\n", curCol, dbVal, whereVal);
-				fputs(newRow, fNewDB);
-				fputc('\n', fNewDB);
+				
+				// If updating, place the new row; if delete, drop the record by omission
+				if (cmd == UPDATE) {
+					fputs(newRow, fNewDB);
+					fputc('\n', fNewDB);
+				}
+				
 				foundLength = (strlen(fullRow) + 1) * sizeof(char);
 				
 				// Skip placing the existing row
@@ -129,10 +153,14 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, const char* whereVal, int w
 }
 
 int database(int cmdType, int col, const char* tbl, const char* setVal, int whereCol, const char* whereVal) {
-	int dbSuccess = 0;
+	int dbSuccess = 0, byteReset = -1;
 	
 	// File pointer for the client's table
 	FILE* fDB;
+	
+	// A const char prefix for the DB's filename, and a pointer to the full temp name
+	char prefix[] = "temp_";
+	char* dbTemp;
 	
 	switch (cmdType) {
 	case 1: // SELECT
@@ -148,35 +176,15 @@ int database(int cmdType, int col, const char* tbl, const char* setVal, int wher
 		break;
 	case 3: // UPDATE
 		fDB = fopen(tbl, "r+"); // Open in read-write mode (find existing record and update)
-		//int byteReset = findUpdateRow(fDB, whereVal, whereCol);
-		
-		// Define a const char for a prefix for the DB's filename
-		const char prefix[] = "temp_";
 		
 		// Create the temp file's name on the heap, adding an extra char for null
-		char* dbTemp = (char*) malloc((strlen(prefix) + strlen(tbl) + 1) * sizeof(char));
-		printf("%d, %d\n", strlen(prefix), strlen(tbl));
+		dbTemp = (char*) malloc((strlen(prefix) + strlen(tbl) + 1) * sizeof(char));
 		
 		// Initialize dbTemp
-		for (int i = 0, j = 0; i < strlen(prefix) + strlen(tbl) + 1; i++) {
-			if (i < strlen(prefix)) {
-				// Place the prefix
-				dbTemp[i] = prefix[i];
-			}
-			else if (i < strlen(prefix) + strlen(tbl)) {
-				// Place the existing filename
-				dbTemp[i] = tbl[j];
-				j++;
-			}
-			else {
-				// Place the terminating null character
-				dbTemp[i] = '\0';
-			}
-		}
-		printf("Temp DB: %s\n", dbTemp);
+		getTempName(dbTemp, prefix, tbl);
 		
-		//int byteReset = testFile(dbTemp);
-		int byteReset = findAndReplaceRow(fDB, dbTemp, whereVal, whereCol, setVal);
+		// Perform the update
+		byteReset = findAndReplaceRow(fDB, dbTemp, whereVal, whereCol, setVal, UPDATE);
 		
 		// If the value was found, rename the dbTemp file to overwrite the existing DB
 		fclose(fDB);
@@ -188,11 +196,9 @@ int database(int cmdType, int col, const char* tbl, const char* setVal, int wher
 				printf("Couldn't rename\n");
 				dbSuccess = -2;
 			}
-			else {
-				printf("Renamed\n");
-			}
 		}
 		else {
+			// The whereVal was not found
 			printf("Not found\n");
 			
 			// Remove the temp file
@@ -204,7 +210,37 @@ int database(int cmdType, int col, const char* tbl, const char* setVal, int wher
 		break;
 	case 4: // DELETE
 		fDB = fopen(tbl, "r+"); // Open in read-write mode (find existing record and delete)
+		
+		// Create the temp file's name on the heap, adding an extra char for null
+		dbTemp = (char*) malloc((strlen(prefix) + strlen(tbl) + 1) * sizeof(char));
+		
+		// Initialize dbTemp
+		getTempName(dbTemp, prefix, tbl);
+		
+		// Perform the deletion
+		byteReset = findAndReplaceRow(fDB, dbTemp, whereVal, whereCol, setVal, DELETE);
+		
+		// If the value was found, rename the dbTemp file to overwrite the existing DB
 		fclose(fDB);
+		if (byteReset != -1) {
+			// Set the temp file's name to the original file's name
+			remove(tbl);
+			if (rename(dbTemp, tbl)) {
+				// Failure
+				printf("Couldn't rename\n");
+				dbSuccess = -2;
+			}
+		}
+		else {
+			// The whereVal was not found
+			printf("Not found\n");
+			
+			// Remove the temp file
+			remove(dbTemp);
+			dbSuccess = 1;
+		}
+		
+		free(dbTemp);
 		break;
 	default:
 		dbSuccess = -1;
@@ -227,6 +263,24 @@ int registerClient(char* registerData, int isCustomer) {
 	}
 	
 	return registerSuccess;
+}
+
+// TESTING PURPOSES ONLY
+int removeClient(int isCustomer) {
+	int rowsAffected = 0;
+	
+	// Update sellerInformation or customerInformation
+	if (isCustomer) {
+		// TODO: Pass unique identifier to removeClient (currently hardcoded with CustomerID of 5)
+		// Update the customer's information
+		rowsAffected = database(DELETE, -1, "clientInformation.txt", NULL, 0, "5");
+	}
+	else {
+		// Update the seller's information
+		rowsAffected = database(DELETE, 0, "sellerInformation.txt", NULL, 0, NULL);
+	}
+	
+	return rowsAffected;
 }
 
 int updateClient(char* registerData, int isCustomer) {
