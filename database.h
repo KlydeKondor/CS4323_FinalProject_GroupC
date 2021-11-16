@@ -81,9 +81,68 @@ void getTempName(char* dbTemp, const char* prefix, const char* tbl) {
 	}
 }
 
+// Handles the Select query; returns a char* value which points to the row that is found
+char* findRow(FILE* fDB, const char* whereVal, int whereCol) {
+	// Buffer variables
+	char getVal[BUFF_SIZE]; // Buffer for the current DB row
+	char* fullRow = (char*) malloc(BUFF_SIZE * sizeof(char)); // Char pointer for the current DB row
+	char* dbVal = (char*) malloc(BUFF_SIZE * sizeof(char)); // Char pointer for the current DB column
+	const char separator[2] = "|"; // Delimiter to be used in the strtok function
+	
+	// Counter variables
+	int curRow = 0, curCol = 0;
+	
+	// Initialize getVal with the first row
+	fgets(getVal, BUFF_SIZE, fDB);
+	
+	// Check each row
+	while (getVal[0] != '\0') {
+		// Store the current row in fullRow
+		strcpy(fullRow, getVal);
+		
+		// Initialize dbVal with the first column in getVal (need strcpy?)
+		strcpy(dbVal, strtok(getVal, separator));
+		
+		// Check each column
+		while (curCol <= whereCol && dbVal != NULL && dbVal[0] != '\n' && dbVal[0] != '|') {
+			// Check dbVal vs whereVal
+			if (curCol == whereCol && strcmp(dbVal, whereVal) == 0) {
+				// Assign fullRow to retRow to pass back by reference
+				printf("Column %d: DB - %s ### Search - %s\n", curCol, dbVal, whereVal);
+					
+				// Quit searching
+				goto found;
+			}
+			else if (dbVal != NULL) {
+				printf("Column %d: DB - %s ### Search - %s\n", curCol, dbVal, whereVal);
+			}
+			
+			// Get the current leftmost column using strtok
+			strcpy(dbVal, strtok(NULL, separator)); // Passing NULL so each column is removed from the buffer
+			curCol++;
+		}
+		
+		// Get the next row
+		memset(getVal, 0, BUFF_SIZE); // Clear getVal
+		fgets(getVal, BUFF_SIZE, fDB); // Use fgets for the next row
+		curRow++; // Increment curRow
+		curCol = 0; // Reset curCol
+	}
+	
+	// If not found, return NULL
+	free(fullRow);
+	free(dbVal);
+	return NULL;
+	
+found:
+	// fullRow must be freed outside of this function
+	free(dbVal);
+	return fullRow;
+}
+
+// Handles both Update and Delete commands; returns an integer value indicating success (>= 0) or failure (< 0)
 int findAndReplaceRow(FILE* fDB, const char* dbName, const char* whereVal, int whereCol, const char* newRow, int cmd) {
 	// Pointer to a new file which will eventually overwrite the original DB
-	printf("Temp DB name is %s\n", dbName);
 	FILE* fNewDB = fopen(dbName, "w");
 	
 	// Buffer variables
@@ -114,13 +173,16 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, const char* whereVal, int w
 				// Place setVal instead of the existing row
 				printf("Column %d: DB - %s ### Search - %s\n", curCol, dbVal, whereVal);
 				
-				// If updating, place the new row; if delete, drop the record by omission
+				// Record the length of the last row
+				foundLength = (strlen(fullRow) + 1) * sizeof(char);
+				
+				// Check the command
 				if (cmd == UPDATE) {
+					// If Update, place the new row
 					fputs(newRow, fNewDB);
 					fputc('\n', fNewDB);
 				}
-				
-				foundLength = (strlen(fullRow) + 1) * sizeof(char);
+				// If Delete, drop the record by omission
 				
 				// Skip placing the existing row
 				goto found;
@@ -166,7 +228,21 @@ int database(int cmdType, int col, const char* tbl, const char* setVal, int wher
 	case 1: // SELECT
 		fDB = fopen(tbl, "r"); // Open in read-only mode
 		
+		// Select the row
+		char* retVal;
+		retVal = findRow(fDB, whereVal, whereCol);
+		
+		// If the value was found, rename the dbTemp file to overwrite the existing DB
 		fclose(fDB);
+		if (retVal != NULL) {
+			printf("The row was found! %s\n", retVal);
+			free(retVal);
+		}
+		else {
+			// The whereVal was not found
+			printf("Not found\n");
+		}
+		
 		break;
 	case 2: // INSERT
 		fDB = fopen(tbl, "a"); // Open in append mode
@@ -249,6 +325,7 @@ int database(int cmdType, int col, const char* tbl, const char* setVal, int wher
 	return dbSuccess;
 }
 
+// Facilitates the Insert command for a customer or seller
 int registerClient(char* registerData, int isCustomer) {
 	int registerSuccess = 0;
 	
@@ -263,6 +340,24 @@ int registerClient(char* registerData, int isCustomer) {
 	}
 	
 	return registerSuccess;
+}
+
+// TESTING PURPOSES ONLY
+int selectClient(int isCustomer) {
+	int rowsAffected = 0;
+	
+	// Select from sellerInformation or customerInformation
+	if (isCustomer) {
+		// TODO: Pass unique identifier to selectClient (currently hardcoded with CustomerID of 5)
+		// Select a customer's information
+		rowsAffected = database(SELECT, -1, "clientInformation.txt", NULL, 0, "5");
+	}
+	else {
+		// Select a seller's information
+		rowsAffected = database(SELECT, 0, "sellerInformation.txt", NULL, 0, NULL);
+	}
+	
+	return rowsAffected;
 }
 
 // TESTING PURPOSES ONLY
@@ -283,6 +378,7 @@ int removeClient(int isCustomer) {
 	return rowsAffected;
 }
 
+// Facilitates the Update command for a customer or seller
 int updateClient(char* registerData, int isCustomer) {
 	int rowsAffected = 0;
 	
