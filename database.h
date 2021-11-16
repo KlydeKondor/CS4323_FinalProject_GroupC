@@ -62,15 +62,20 @@ struct customerOrder {
 	char* contactAddress;
 };
 
-int findUpdateRow(FILE* fDB, const char* whereVal, int whereCol) {
-	int foundLength = -1;
+int findAndReplaceRow(FILE* fDB, const char* dbName, const char* whereVal, int whereCol, const char* newRow) {
+	// Pointer to a new file which will eventually overwrite the original DB
+	printf("Temp DB name is %s\n", dbName);
+	FILE* fNewDB = fopen(dbName, "w");
+	
+	// Buffer variables
+	int foundLength = -1; // Will record the length of the line in which whereVal is found
 	char getVal[BUFF_SIZE]; // Buffer for the current DB row
 	char* fullRow = (char*) malloc(BUFF_SIZE * sizeof(char)); // Char pointer for the current DB row
 	char* dbVal = (char*) malloc(BUFF_SIZE * sizeof(char)); // Char pointer for the current DB column
-	
 	const char separator[2] = "|"; // Delimiter to be used in the strtok function
+	
+	// Counter variables
 	int curRow = 0, curCol = 0;
-	int breakCounter = 0;
 	
 	// Initialize getVal with the first row
 	fgets(getVal, BUFF_SIZE, fDB);
@@ -87,8 +92,13 @@ int findUpdateRow(FILE* fDB, const char* whereVal, int whereCol) {
 		while (curCol <= whereCol && dbVal != NULL && dbVal[0] != '\n' && dbVal[0] != '|') {
 			// Check dbVal vs whereVal
 			if (curCol == whereCol && strcmp(dbVal, whereVal) == 0) {
-				// Skip finding the next row; this is the final row
+				// Place setVal instead of the existing row
 				printf("Column %d: DB - %s ### Search - %s\n", curCol, dbVal, whereVal);
+				fputs(newRow, fNewDB);
+				fputc('\n', fNewDB);
+				foundLength = (strlen(fullRow) + 1) * sizeof(char);
+				
+				// Skip placing the existing row
 				goto found;
 			}
 			else if (dbVal != NULL) {
@@ -100,6 +110,10 @@ int findUpdateRow(FILE* fDB, const char* whereVal, int whereCol) {
 			curCol++;
 		}
 		
+		// Write the current row in the temp file
+		fputs(fullRow, fNewDB);
+		
+	found:	
 		// Get the next row
 		memset(getVal, 0, BUFF_SIZE); // Clear getVal
 		fgets(getVal, BUFF_SIZE, fDB); // Use fgets for the next row
@@ -110,37 +124,8 @@ int findUpdateRow(FILE* fDB, const char* whereVal, int whereCol) {
 	// If not found, return -1
 	free(fullRow);
 	free(dbVal);
+	fclose(fNewDB);
 	return foundLength;
-	
-found:
-	foundLength = (strlen(fullRow) + 1) * sizeof(char);
-	printf("Success! Row length = %d chars\n", foundLength);
-	free(fullRow);
-	free(dbVal);
-	
-	return foundLength;
-}
-
-int performUpdate(FILE* fDB, int rowLength, const char* newRow) {
-	int curChar = strlen(newRow);
-	
-	// Use fseek to move the cursor back to the start of the current row and overwrite
-	fseek(fDB, -rowLength, SEEK_CUR);
-	
-	// fseek moved the cursor to the correct location; can now place the new data
-	fputs(newRow, fDB);
-	
-	// Overwrite the remainder of the line with pipe characters if the replacement data is shorter than the original
-	while (curChar < MAX_ROW && curChar < rowLength - 1) {
-		fputc('\0', fDB);
-		curChar++;
-	}
-	
-	// Add a newline character
-	fseek(fDB, -(int) sizeof(char), SEEK_CUR);
-	fputc('\n', fDB);
-	
-	return 0;
 }
 
 int database(int cmdType, int col, const char* tbl, const char* setVal, int whereCol, const char* whereVal) {
@@ -163,18 +148,59 @@ int database(int cmdType, int col, const char* tbl, const char* setVal, int wher
 		break;
 	case 3: // UPDATE
 		fDB = fopen(tbl, "r+"); // Open in read-write mode (find existing record and update)
-		int byteReset = findUpdateRow(fDB, whereVal, whereCol);
+		//int byteReset = findUpdateRow(fDB, whereVal, whereCol);
 		
-		// If the value was found, update the associated row with the new info
+		// Define a const char for a prefix for the DB's filename
+		const char prefix[] = "temp_";
+		
+		// Create the temp file's name on the heap, adding an extra char for null
+		char* dbTemp = (char*) malloc((strlen(prefix) + strlen(tbl) + 1) * sizeof(char));
+		printf("%d, %d\n", strlen(prefix), strlen(tbl));
+		
+		// Initialize dbTemp
+		for (int i = 0, j = 0; i < strlen(prefix) + strlen(tbl) + 1; i++) {
+			if (i < strlen(prefix)) {
+				// Place the prefix
+				dbTemp[i] = prefix[i];
+			}
+			else if (i < strlen(prefix) + strlen(tbl)) {
+				// Place the existing filename
+				dbTemp[i] = tbl[j];
+				j++;
+			}
+			else {
+				// Place the terminating null character
+				dbTemp[i] = '\0';
+			}
+		}
+		printf("Temp DB: %s\n", dbTemp);
+		
+		//int byteReset = testFile(dbTemp);
+		int byteReset = findAndReplaceRow(fDB, dbTemp, whereVal, whereCol, setVal);
+		
+		// If the value was found, rename the dbTemp file to overwrite the existing DB
+		fclose(fDB);
 		if (byteReset != -1) {
-			// Overwrite the old row with the new row
-			performUpdate(fDB, byteReset, setVal);
-			fclose(fDB);
+			// Set the temp file's name to the original file's name
+			remove(tbl);
+			if (rename(dbTemp, tbl)) {
+				// Failure
+				printf("Couldn't rename\n");
+				dbSuccess = -2;
+			}
+			else {
+				printf("Renamed\n");
+			}
 		}
 		else {
 			printf("Not found\n");
-			fclose(fDB);
+			
+			// Remove the temp file
+			remove(dbTemp);
+			dbSuccess = 1;
 		}
+		
+		free(dbTemp);
 		break;
 	case 4: // DELETE
 		fDB = fopen(tbl, "r+"); // Open in read-write mode (find existing record and delete)
