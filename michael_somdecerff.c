@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
+#include "linkedList.h"
 #include "readWriteLock.h"
 #include "socketConnection.h"
 #include "util.h"
@@ -192,6 +193,94 @@ void freeSocket(struct socket_t* socket) {
     socket = NULL;
 }
 
+/////////////////////////////////////////////////////
+//
+// LinkedList.h
+//
+/////////////////////////////////////////////////////
+struct linkedList_t* mallocLinkedList() {
+    struct linkedList_t* list = malloc(sizeof(struct linkedList_t));
+    list->count = 0;
+    list->head = NULL;
+    list->tail = NULL;
+
+    return list;
+}
+
+void linkedListAppend(struct linkedList_t* list, void* data) {
+    assert(list != NULL);
+    assert(data != NULL);
+
+    struct node_t* node = malloc(sizeof(struct node_t));
+    node->data = data;
+    node->next = NULL;
+
+    if(list->tail == NULL) {
+        list->head = node;
+        list->tail = node;
+    }
+    else {
+        list->tail->next = node;
+        list->tail = node;
+    }
+    list->count++;
+}
+
+void* linkedListPop(struct linkedList_t* list) {
+    assert(list != NULL);
+
+    if(list->count == 0) {
+        // No idea what standard practice is here. I know returning null is almost always a bad idea
+        return NULL;
+    }
+
+    void* data = list->head->data;
+
+    // Only 1 element in list
+    if(list->count == 1) {
+        free(list->head);
+        list->head = NULL;
+        list->tail = NULL;
+    }
+    // More than 1 element in the list
+    else {
+        struct node_t* head = list->head;
+        list->head = list->head->next;
+        free(head);
+    }
+    list->count--;
+
+    return data;
+}
+
+void* linkedListPeek(const struct linkedList_t* list) {
+    assert(list != NULL);
+
+    if(list->head == NULL) {
+        return NULL;
+    }
+    else {
+        return list->head->data;
+    }
+}
+
+void freeLinkedList(struct linkedList_t* list) {
+    assert(list != NULL);
+
+    if(list->count > 0) {
+        while (list->head != NULL) {
+            struct node_t *next = list->head->next;
+
+            free(list->head->data);
+            free(list->head);
+
+            list->head = next;
+        }
+    }
+
+    free(list);
+    list = NULL;
+}
 
 ///////////////////////////////////////////////
 //
