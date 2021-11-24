@@ -1,5 +1,5 @@
 // Kyle Kentner
-// 11/10/2021
+// 11/24/2021
 // kyle.kentner@okstate.edu
 // Defining functions to handle database operations
 
@@ -12,17 +12,21 @@
 int main() {
 	// TODO: Uniqueness checking
 	// Insert a dummy row
+	printf("\nINSERT TEST...\n");
 	char dummyData[] = "5|Jane Doe|555-867-5309|123 Address Road|";
 	registerClient(dummyData, 1);
 	
 	// Update the dummy row (comment out to verify that the row  is being added)
+	printf("\nUPDATE TEST...\n");
 	char dummyUpdate[] = "5|tesT|Dadt|Foo|";
 	updateClient(dummyUpdate, 1);
 	
 	// Select the dummy row
+	printf("\nSELECT TEST...\n");
 	selectClient(1);
 	
 	// Delete the dummy row (comment out to verify that the row is being added/updated)
+	printf("\nDELETE TEST...\n");
 	removeClient(1);
 	
 	return 0;

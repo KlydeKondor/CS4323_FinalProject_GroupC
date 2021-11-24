@@ -1,5 +1,5 @@
-0|Customer Name|123-456-7890|123 Address Street|
 1|John Smith|234-456-7890|234 Address Lane|
 2|Billy Bob|345-456-7890|345 Address Avenue|
 3|Bobby Bill|456-456-7890|456 Address Boulevard|
 4|Edgar Allen Whoathere|789-456-7890|789 Address Way|
+5|Linked List|1-800-NEW-TEST|300 Linked List Parkway|

@@ -96,12 +96,12 @@ char* findRow(FILE* fDB, int whereCol, const char* whereVal) {
 	// Initialize getVal with the first row
 	fgets(getVal, BUFF_SIZE, fDB);
 	
-	// Check each row
-	while (getVal[0] != '\0') {
+	// Check each row while getVal is not null and the full row was read (i.e. quit at EOF)
+	while (getVal[0] != '\0' && strlen(getVal) > 2 && getVal[strlen(getVal) - 2] == '|') {
 		// Store the current row in fullRow
 		strcpy(fullRow, getVal);
 		
-		// Initialize dbVal with the first column in getVal (need strcpy?)
+		// Initialize dbVal with the first column in getVal
 		strcpy(dbVal, strtok(getVal, separator));
 		
 		// Check each column
@@ -110,7 +110,7 @@ char* findRow(FILE* fDB, int whereCol, const char* whereVal) {
 			if (curCol == whereCol && strcmp(dbVal, whereVal) == 0) {
 				// Assign fullRow to retRow to pass back by reference
 				printf("Column %d: DB - %s ### Search - %s\n", curCol, dbVal, whereVal);
-					
+				
 				// Quit searching
 				goto found;
 			}
@@ -221,6 +221,9 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, int whereCol, const char* w
 int select(const char* tbl, int whereCol, char* whereVal) {
 	int dbSuccess = 0;
 	
+	struct node_t* resList = (struct node_t*) malloc(sizeof(struct node_t));
+	struct node_t* curRes = resList;
+	
 	// File pointer for the client's table
 	FILE* fDB;
 	
@@ -233,22 +236,53 @@ int select(const char* tbl, int whereCol, char* whereVal) {
 	
 	// Select the row
 	char* retVal;
-	retVal = findRow(fDB, whereCol, whereVal);
 	
-	// If the value was found, rename the dbTemp file to overwrite the existing DB
+	do {		
+		retVal = findRow(fDB, whereCol, whereVal);
+
+		// Store the pointer to the DB record in the node's data (may be NULL)
+		curRes->data = retVal;
+		
+		// If the value was found, rename the dbTemp file to overwrite the existing DB
+		if (retVal != NULL) {
+			printf("The row was found! %s\n", retVal);
+			
+			// TODO: Return linked list to calling function and convert to struct
+			
+			// malloc a new node and make curRes point to it
+			curRes->next = (struct node_t*) malloc(sizeof(struct node_t));
+			curRes = curRes->next;
+			
+			//free(retVal);
+		}
+	} while (retVal != NULL && retVal[0] != '\0');
+	
+	// For testing purposes; print out all results found
+	curRes = resList;
+	struct node_t* prevRes;
+	
+	// Print while data is available
+	int i = 1;
+	while (curRes->data != NULL) {
+		printf("Selection %d: %s\n", i, (char*) curRes->data);
+		i++;
+		
+		// Free the data after printing
+		free(curRes->data);
+		
+		// Remember this node
+		prevRes = curRes;
+		
+		// Advance
+		curRes = curRes->next;
+		
+		// Free the previous node
+		free(prevRes);
+	}
+	
+	free(curRes);
+	
 	fclose(fDB);
-	if (retVal != NULL) {
-		printf("The row was found! %s\n", retVal);
-		
-		// TODO: Convert retVal to the proper struct (return pointer to calling function?)
-		
-		free(retVal);
-	}
-	else {
-		// The whereVal was not found
-		printf("Not found\n");
-		dbSuccess = -1;
-	}
 	
 	return dbSuccess;
 }
