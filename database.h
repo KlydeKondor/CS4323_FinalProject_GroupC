@@ -22,9 +22,19 @@
 #define DELETE 4
 
 // Column constants
-#define PRODUCT_ID 0 // Quantity available (productInformation)
-#define QUANTITY_A 3 // Quantity available (productInformation)
+#define BUYER_ID_PK 0 // Customer ID (customerInformation)
+#define BUYER_ID_FK 1 // Customer ID (billingInformation)
 #define QUANTITY_P 2 // Quantity purchased (customerOrder)
+
+#define SELLER_ID_PK 0 // Seller ID (sellerInformation)
+#define SELLER_ID_FK 2 // Seller ID (productInformation)
+
+#define PRODUCT_ID_PK 0 // Product ID (productInformation)
+#define PRODUCT_ID_FK 1 // Product ID (customerOrder)
+#define QUANTITY_A 3 // Quantity available (productInformation)
+
+#define ORDER_ID_PK 0 // Order ID (billingInformation)
+#define ORDER_ID_FK 0 // Order ID (customerOrder)
 
 struct sellerInfo {
 	int sellerID;
@@ -505,7 +515,7 @@ int purchaseReturnProduct(char* productID, char* customerID, char* orderID, int 
 	if (change > 0) {
 		// If able to read, get the current quantity available
 		// TODO: Get value from database, see if purchase can be made
-		purchaseReturnSuccess = select("productInformation.txt", PRODUCT_ID, productID);
+		purchaseReturnSuccess = select("productInformation.txt", PRODUCT_ID_PK, productID);
 	}
 	
 	// Update the quantity of a product in productInformation; reflect changes in billingInformation and customerOrder
@@ -513,4 +523,37 @@ int purchaseReturnProduct(char* productID, char* customerID, char* orderID, int 
 	//purchaseReturnSuccess = database(UPDATE, QUANTITY_A, "productInformation.txt", PRODUCT_ID, productID);
 	
 	return purchaseReturnSuccess;
+}
+
+void viewProductsSeller(char* sellerID) {
+	// Select and display all products where this client is the seller
+	select("productInformation.txt", SELLER_ID_FK, sellerID);
+}
+
+void viewProductsBuyer(char* productID) {
+	// Select and display information for the buyer's desired product
+	select("productInformation.txt", PRODUCT_ID_PK, productID);
+}
+
+void viewOrdersSeller(char* sellerID) {
+	// Select all products where this client is the seller
+	select("productInformation.txt", SELLER_ID_FK, sellerID);
+	
+	// Select and display all orders for each of these products
+	// TODO: Linked list, "while node != NULL, select on ProductID"
+	select("customerOrder.txt", PRODUCT_ID_FK, sellerID);
+}
+
+void viewOrdersBuyer(char* buyerID) {
+	// Select all orders where this client is the buyer
+	select("billingInformation.txt", BUYER_ID_FK, buyerID);
+	
+	// Select and display all orders where this client is the buyer
+	// TODO: Linked list, "while node != NULL, select on OrderID"
+	select("customerOrder.txt", ORDER_ID_FK, buyerID);
+}
+
+void viewBillingInfo(char* buyerID) {
+	// Select and display all orders where this client is the buyer
+	select("billingInformation.txt", BUYER_ID_PK, buyerID);
 }

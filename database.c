@@ -10,6 +10,7 @@
 #include "database.h"
 
 int main() {
+	// First four operations in PDF
 	// TODO: Uniqueness checking
 	// Insert a dummy row
 	printf("\nINSERT TEST...\n");
@@ -28,6 +29,19 @@ int main() {
 	// Delete the dummy row (comment out to verify that the row is being added/updated)
 	printf("\nDELETE TEST...\n");
 	removeClient(1);
+	
+	// Last five operations in PDF
+	printf("\nVIEW PRODUCTS SELLER...\n");
+	viewProductsSeller("4");
+	
+	// TODO: viewOrdersSeller(int sellerID)
+	// TODO: viewOrdersBuyer(int buyerID)
+	
+	printf("\nVIEW PRODUCTS BUYER...\n");
+	viewProductsBuyer("3");
+	
+	printf("\nVIEW BILLING INFO...\n");
+	viewBillingInfo("2");
 	
 	return 0;
 }
