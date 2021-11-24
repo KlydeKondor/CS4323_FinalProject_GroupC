@@ -1,5 +1,5 @@
 // Kyle Kentner
-// 11/10/2021
+// 11/24/2021
 // kyle.kentner@okstate.edu
 // Defining functions to handle database operations
 
@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "linkedlist.h"
 
 // Buffer variable
 #define BUFF_SIZE 8192
@@ -82,7 +83,7 @@ void getTempName(char* dbTemp, const char* prefix, const char* tbl) {
 }
 
 // Handles the Select query; returns a char* value which points to the row that is found
-char* findRow(FILE* fDB, const char* whereVal, int whereCol) {
+char* findRow(FILE* fDB, int whereCol, const char* whereVal) {
 	// Buffer variables
 	char getVal[BUFF_SIZE]; // Buffer for the current DB row
 	char* fullRow = (char*) malloc(BUFF_SIZE * sizeof(char)); // Char pointer for the current DB row
@@ -141,7 +142,7 @@ found:
 }
 
 // Handles both Update and Delete commands; returns an integer value indicating success (>= 0) or failure (< 0)
-int findAndReplaceRow(FILE* fDB, const char* dbName, const char* whereVal, int whereCol, const char* newRow, int cmd) {
+int findAndReplaceRow(FILE* fDB, const char* dbName, int whereCol, const char* whereVal, const char* newRow, int cmd) {
 	// Pointer to a new file which will eventually overwrite the original DB
 	FILE* fNewDB = fopen(dbName, "w");
 	
@@ -214,7 +215,72 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, const char* whereVal, int w
 	return foundLength;
 }
 
-int database(int cmdType, int col, const char* tbl, const char* setVal, int whereCol, const char* whereVal) {
+// Selects the first row where some field (whereCol) matches the search criterion (whereVal)
+// TODO: Accomodate multiple records
+// 
+int select(const char* tbl, int whereCol, char* whereVal) {
+	int dbSuccess = 0;
+	
+	// File pointer for the client's table
+	FILE* fDB;
+	
+	// A const char prefix for the DB's filename, and a pointer to the full temp name
+	char prefix[] = "temp_";
+	char* dbTemp;
+	
+	 // Open in read-only mode
+	fDB = fopen(tbl, "r");
+	
+	// Select the row
+	char* retVal;
+	retVal = findRow(fDB, whereCol, whereVal);
+	
+	// If the value was found, rename the dbTemp file to overwrite the existing DB
+	fclose(fDB);
+	if (retVal != NULL) {
+		printf("The row was found! %s\n", retVal);
+		
+		// TODO: Convert retVal to the proper struct (return pointer to calling function?)
+		
+		free(retVal);
+	}
+	else {
+		// The whereVal was not found
+		printf("Not found\n");
+		dbSuccess = -1;
+	}
+	
+	return dbSuccess;
+}
+
+// Inserts a row at the end of the file
+// TODO: Ensure unique key, place in sequential order
+//
+int insert(const char* tbl, char* setVal) {
+	int dbSuccess = -1; // Failure
+	
+	// File pointer for the client's table
+	FILE* fDB;
+	
+	// A const char prefix for the DB's filename, and a pointer to the full temp name
+	char prefix[] = "temp_";
+	char* dbTemp;
+	
+	// Open in append mode
+	fDB = fopen(tbl, "a");
+	if (fDB != NULL) {
+		fputs(setVal, fDB);
+		fputc('\n', fDB); // Add the newline character separately
+		fclose(fDB);
+		dbSuccess = 0;
+	}
+	
+	return dbSuccess;
+}
+
+// Updates one or more records where some field (whereCol) matches some criterion (whereVal)
+//
+int update(const char* tbl, char* setVal, int whereCol, char* whereVal) {
 	int dbSuccess = 0, byteReset = -1;
 	
 	// File pointer for the client's table
@@ -224,106 +290,93 @@ int database(int cmdType, int col, const char* tbl, const char* setVal, int wher
 	char prefix[] = "temp_";
 	char* dbTemp;
 	
-	switch (cmdType) {
-	case 1: // SELECT
-		fDB = fopen(tbl, "r"); // Open in read-only mode
-		
-		// Select the row
-		char* retVal;
-		retVal = findRow(fDB, whereVal, whereCol);
-		
-		// If the value was found, rename the dbTemp file to overwrite the existing DB
-		fclose(fDB);
-		if (retVal != NULL) {
-			printf("The row was found! %s\n", retVal);
-			free(retVal);
+	// Open in read-write mode (find existing record and update)
+	fDB = fopen(tbl, "r+");
+	
+	// Create the temp file's name on the heap, adding an extra char for null
+	dbTemp = (char*) malloc((strlen(prefix) + strlen(tbl) + 1) * sizeof(char));
+	
+	// Initialize dbTemp
+	getTempName(dbTemp, prefix, tbl);
+	
+	// Perform the update
+	byteReset = findAndReplaceRow(fDB, dbTemp, whereCol, whereVal, setVal, UPDATE);
+	
+	// If the value was found, rename the dbTemp file to overwrite the existing DB
+	fclose(fDB);
+	if (byteReset != -1) {
+		// Set the temp file's name to the original file's name
+		remove(tbl);
+		if (rename(dbTemp, tbl)) {
+			// Failure
+			printf("Couldn't rename\n");
+			dbSuccess = -2;
 		}
-		else {
-			// The whereVal was not found
-			printf("Not found\n");
-		}
-		
-		break;
-	case 2: // INSERT
-		fDB = fopen(tbl, "a"); // Open in append mode
-		fputs(setVal, fDB);
-		fputc('\n', fDB); // Add the newline character separately
-		fclose(fDB);
-		break;
-	case 3: // UPDATE
-		fDB = fopen(tbl, "r+"); // Open in read-write mode (find existing record and update)
-		
-		// Create the temp file's name on the heap, adding an extra char for null
-		dbTemp = (char*) malloc((strlen(prefix) + strlen(tbl) + 1) * sizeof(char));
-		
-		// Initialize dbTemp
-		getTempName(dbTemp, prefix, tbl);
-		
-		// Perform the update
-		byteReset = findAndReplaceRow(fDB, dbTemp, whereVal, whereCol, setVal, UPDATE);
-		
-		// If the value was found, rename the dbTemp file to overwrite the existing DB
-		fclose(fDB);
-		if (byteReset != -1) {
-			// Set the temp file's name to the original file's name
-			remove(tbl);
-			if (rename(dbTemp, tbl)) {
-				// Failure
-				printf("Couldn't rename\n");
-				dbSuccess = -2;
-			}
-		}
-		else {
-			// The whereVal was not found
-			printf("Not found\n");
-			
-			// Remove the temp file
-			remove(dbTemp);
-			dbSuccess = 1;
-		}
-		
-		free(dbTemp);
-		break;
-	case 4: // DELETE
-		fDB = fopen(tbl, "r+"); // Open in read-write mode (find existing record and delete)
-		
-		// Create the temp file's name on the heap, adding an extra char for null
-		dbTemp = (char*) malloc((strlen(prefix) + strlen(tbl) + 1) * sizeof(char));
-		
-		// Initialize dbTemp
-		getTempName(dbTemp, prefix, tbl);
-		
-		// Perform the deletion
-		byteReset = findAndReplaceRow(fDB, dbTemp, whereVal, whereCol, setVal, DELETE);
-		
-		// If the value was found, rename the dbTemp file to overwrite the existing DB
-		fclose(fDB);
-		if (byteReset != -1) {
-			// Set the temp file's name to the original file's name
-			remove(tbl);
-			if (rename(dbTemp, tbl)) {
-				// Failure
-				printf("Couldn't rename\n");
-				dbSuccess = -2;
-			}
-		}
-		else {
-			// The whereVal was not found
-			printf("Not found\n");
-			
-			// Remove the temp file
-			remove(dbTemp);
-			dbSuccess = 1;
-		}
-		
-		free(dbTemp);
-		break;
-	default:
-		dbSuccess = -1;
 	}
+	else {
+		// The whereVal was not found
+		printf("Not found\n");
+		
+		// Remove the temp file
+		remove(dbTemp);
+		dbSuccess = 1;
+	}
+	
+	free(dbTemp);
+			
+	return dbSuccess;
+}
+
+// Deletes one or more rows where some field (whereCol) matches some criterion (whereVal)
+//
+int drop(const char* tbl, int whereCol, char* whereVal) {
+	int dbSuccess = 0, byteReset = -1;
+	
+	// File pointer for the client's table
+	FILE* fDB;
+	
+	// A const char prefix for the DB's filename, and a pointer to the full temp name
+	char prefix[] = "temp_";
+	char* dbTemp;
+	
+	// Open in read-write mode (find existing record and delete)
+	fDB = fopen(tbl, "r+");
+	
+	// Create the temp file's name on the heap, adding an extra char for null
+	dbTemp = (char*) malloc((strlen(prefix) + strlen(tbl) + 1) * sizeof(char));
+	
+	// Initialize dbTemp
+	getTempName(dbTemp, prefix, tbl);
+	
+	// Perform the deletion
+	byteReset = findAndReplaceRow(fDB, dbTemp, whereCol, whereVal, NULL, DELETE);
+	
+	// If the value was found, rename the dbTemp file to overwrite the existing DB
+	fclose(fDB);
+	if (byteReset != -1) {
+		// Set the temp file's name to the original file's name
+		remove(tbl);
+		if (rename(dbTemp, tbl)) {
+			// Failure
+			printf("Couldn't rename\n");
+			dbSuccess = -2;
+		}
+	}
+	else {
+		// The whereVal was not found
+		printf("Not found\n");
+		
+		// Remove the temp file
+		remove(dbTemp);
+		dbSuccess = 1;
+	}
+	
+	free(dbTemp);
 	
 	return dbSuccess;
 }
+
+int database(int cmdType, int col, const char* tbl, const char* setVal, int whereCol, const char* whereVal);
 
 // Facilitates the Insert command for a customer or seller
 int registerClient(char* registerData, int isCustomer) {
@@ -332,11 +385,11 @@ int registerClient(char* registerData, int isCustomer) {
 	// Insert into sellerInformation or customerInformation
 	if (isCustomer) {
 		// Add the user to the database as a customer (TODO: Check for conflicts?)
-		registerSuccess = database(INSERT, -1, "clientInformation.txt", registerData, -1, NULL);
+		registerSuccess = insert("clientInformation.txt", registerData);
 	}
 	else {
 		// Add the user to the database as a seller (TODO: Check for conflicts?)
-		registerSuccess = database(INSERT, -1, "sellerInformation.txt", registerData, -1, NULL);
+		registerSuccess = insert("sellerInformation.txt", registerData);
 	}
 	
 	return registerSuccess;
@@ -350,11 +403,11 @@ int selectClient(int isCustomer) {
 	if (isCustomer) {
 		// TODO: Pass unique identifier to selectClient (currently hardcoded with CustomerID of 5)
 		// Select a customer's information
-		rowsAffected = database(SELECT, -1, "clientInformation.txt", NULL, 0, "5");
+		rowsAffected = select("clientInformation.txt", 0, "5");
 	}
 	else {
 		// Select a seller's information
-		rowsAffected = database(SELECT, 0, "sellerInformation.txt", NULL, 0, NULL);
+		rowsAffected = select("sellerInformation.txt", 0, NULL);
 	}
 	
 	return rowsAffected;
@@ -368,11 +421,11 @@ int removeClient(int isCustomer) {
 	if (isCustomer) {
 		// TODO: Pass unique identifier to removeClient (currently hardcoded with CustomerID of 5)
 		// Update the customer's information
-		rowsAffected = database(DELETE, -1, "clientInformation.txt", NULL, 0, "5");
+		rowsAffected = drop("clientInformation.txt", 0, "5");
 	}
 	else {
 		// Update the seller's information
-		rowsAffected = database(DELETE, 0, "sellerInformation.txt", NULL, 0, NULL);
+		rowsAffected = drop("sellerInformation.txt", 0, NULL);
 	}
 	
 	return rowsAffected;
@@ -386,11 +439,11 @@ int updateClient(char* registerData, int isCustomer) {
 	if (isCustomer) {
 		// TODO: Pass unique identifier to updateClient (currently hardcoded with CustomerID of 5)
 		// Update the customer's information
-		rowsAffected = database(UPDATE, -1, "clientInformation.txt", registerData, 0, "5");
+		rowsAffected = update("clientInformation.txt", registerData, 0, "5");
 	}
 	else {
 		// Update the seller's information
-		rowsAffected = database(UPDATE, 0, "sellerInformation.txt", registerData, 0, NULL);
+		rowsAffected = update("sellerInformation.txt", registerData, 0, NULL);
 	}
 	
 	return rowsAffected;
@@ -418,7 +471,7 @@ int purchaseReturnProduct(char* productID, char* customerID, char* orderID, int 
 	if (change > 0) {
 		// If able to read, get the current quantity available
 		// TODO: Get value from database, see if purchase can be made
-		purchaseReturnSuccess = database(SELECT, QUANTITY_A, "productInformation.txt", NULL, PRODUCT_ID, productID);
+		purchaseReturnSuccess = select("productInformation.txt", PRODUCT_ID, productID);
 	}
 	
 	// Update the quantity of a product in productInformation; reflect changes in billingInformation and customerOrder
