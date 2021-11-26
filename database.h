@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "linkedlist.h"
 
 // Buffer variable
 #define BUFF_SIZE 8192
@@ -35,6 +34,12 @@
 
 #define ORDER_ID_PK 0 // Order ID (billingInformation)
 #define ORDER_ID_FK 0 // Order ID (customerOrder)
+
+typedef struct Records {
+	struct Records* prev;
+	struct Records* next;
+	void* current;
+} Record;
 
 struct sellerInfo {
 	int sellerID;
@@ -72,6 +77,64 @@ struct customerOrder {
 	char* contactNumber;
 	char* contactAddress;
 };
+
+// Print out all results found
+void printRecords(Record* records, int cols) {
+	printf("\n");
+	
+	// Buffer for the current DB row
+	char getVal[BUFF_SIZE];
+	char* dbVal = (char*) malloc(BUFF_SIZE * sizeof(char)); // Char pointer for the current DB column
+	const char separator[2] = "|"; // Delimiter to be used in the strtok function
+	
+	// Print while data is available
+	while (records != NULL && records->current != NULL && ((char*) (records->current))[0] != '\0') {
+		// Get the leftmost column
+		strcpy(getVal, records->current);
+		strcpy(dbVal, strtok(getVal, separator));
+		
+		int i = 0;
+		while (i < cols) {
+			int j = strlen(dbVal);
+			
+			// Print the column
+			printf("%s", dbVal);
+			
+			// Print spaces
+			while (j < 25) {
+				printf(" ");
+				j++;
+			}
+			
+			// Try to get the next column
+			if (i < cols - 1) {
+				strcpy(dbVal, strtok(NULL, separator)); // Passing NULL so each column is removed from the buffer
+			}
+			i++;
+		}
+
+		// Free the data after printing
+		if (records->next == NULL) {
+			free(records->current);
+			free(records);
+			records = NULL;
+		}
+		else {
+			// Advance
+			records = records->next;
+			
+			// Free the previous node
+			free(records->prev->current);
+			free(records->prev);
+		}
+		
+		printf("\n");
+	}
+	
+	if (records != NULL) {
+		free(records);
+	}
+}
 
 void getTempName(char* dbTemp, const char* prefix, const char* tbl) {
 	// Concatenate the prefix and the DB name, and store in dbTemp
@@ -228,11 +291,13 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, int whereCol, const char* w
 // Selects the first row where some field (whereCol) matches the search criterion (whereVal)
 // TODO: Accomodate multiple records
 // 
-int select(const char* tbl, int whereCol, char* whereVal) {
+Record* select(const char* tbl, int whereCol, char* whereVal) {
 	int dbSuccess = 0;
 	
-	struct node_t* resList = (struct node_t*) malloc(sizeof(struct node_t));
-	struct node_t* curRes = resList;
+	Record* resList = (Record*) malloc(sizeof(Record));
+	Record* head = resList;
+	printf("resList: %p, head: %p\n", resList, head);
+	resList->prev = NULL;
 	
 	// File pointer for the client's table
 	FILE* fDB;
@@ -251,7 +316,7 @@ int select(const char* tbl, int whereCol, char* whereVal) {
 		retVal = findRow(fDB, whereCol, whereVal);
 
 		// Store the pointer to the DB record in the node's data (may be NULL)
-		curRes->data = retVal;
+		resList->current = retVal;
 		
 		// If the value was found, rename the dbTemp file to overwrite the existing DB
 		if (retVal != NULL) {
@@ -259,42 +324,18 @@ int select(const char* tbl, int whereCol, char* whereVal) {
 			
 			// TODO: Return linked list to calling function and convert to struct
 			
-			// malloc a new node and make curRes point to it
-			curRes->next = (struct node_t*) malloc(sizeof(struct node_t));
-			curRes = curRes->next;
+			// malloc a new node and make resList point to it
+			resList->next = (Record*) malloc(sizeof(Record));
+			resList->next->prev = resList;
+			resList = resList->next;
 			
 			//free(retVal);
 		}
 	} while (retVal != NULL && retVal[0] != '\0');
 	
-	// For testing purposes; print out all results found
-	curRes = resList;
-	struct node_t* prevRes;
-	
-	// Print while data is available
-	int i = 1;
-	while (curRes->data != NULL) {
-		printf("Selection %d: %s\n", i, (char*) curRes->data);
-		i++;
-		
-		// Free the data after printing
-		free(curRes->data);
-		
-		// Remember this node
-		prevRes = curRes;
-		
-		// Advance
-		curRes = curRes->next;
-		
-		// Free the previous node
-		free(prevRes);
-	}
-	
-	free(curRes);
-	
 	fclose(fDB);
 	
-	return dbSuccess;
+	return head;
 }
 
 // Inserts a row at the end of the file
@@ -429,7 +470,7 @@ int registerClient(char* registerData, int isCustomer) {
 	// Insert into sellerInformation or customerInformation
 	if (isCustomer) {
 		// Add the user to the database as a customer (TODO: Check for conflicts?)
-		registerSuccess = insert("clientInformation.txt", registerData);
+		registerSuccess = insert("customerInformation.txt", registerData);
 	}
 	else {
 		// Add the user to the database as a seller (TODO: Check for conflicts?)
@@ -440,21 +481,21 @@ int registerClient(char* registerData, int isCustomer) {
 }
 
 // TESTING PURPOSES ONLY
-int selectClient(int isCustomer) {
-	int rowsAffected = 0;
+Record* selectClient(int isCustomer) {
+	Record* rowsSelected = NULL;
 	
 	// Select from sellerInformation or customerInformation
 	if (isCustomer) {
 		// TODO: Pass unique identifier to selectClient (currently hardcoded with CustomerID of 5)
 		// Select a customer's information
-		rowsAffected = select("clientInformation.txt", 0, "5");
+		rowsSelected = select("customerInformation.txt", 0, "5");
 	}
 	else {
 		// Select a seller's information
-		rowsAffected = select("sellerInformation.txt", 0, NULL);
+		rowsSelected = select("sellerInformation.txt", 0, NULL);
 	}
 	
-	return rowsAffected;
+	return rowsSelected;
 }
 
 // TESTING PURPOSES ONLY
@@ -465,7 +506,7 @@ int removeClient(int isCustomer) {
 	if (isCustomer) {
 		// TODO: Pass unique identifier to removeClient (currently hardcoded with CustomerID of 5)
 		// Update the customer's information
-		rowsAffected = drop("clientInformation.txt", 0, "5");
+		rowsAffected = drop("customerInformation.txt", 0, "5");
 	}
 	else {
 		// Update the seller's information
@@ -483,7 +524,7 @@ int updateClient(char* registerData, int isCustomer) {
 	if (isCustomer) {
 		// TODO: Pass unique identifier to updateClient (currently hardcoded with CustomerID of 5)
 		// Update the customer's information
-		rowsAffected = update("clientInformation.txt", registerData, 0, "5");
+		rowsAffected = update("customerInformation.txt", registerData, 0, "5");
 	}
 	else {
 		// Update the seller's information
@@ -509,51 +550,99 @@ int updateQuantityPrice() {
 	return updateSuccess;
 }
 
-int purchaseReturnProduct(char* productID, char* customerID, char* orderID, int change) {
-	int purchaseReturnSuccess = 0;
+Record* purchaseReturnProduct(char* productID, char* customerID, char* orderID, int change) {
+	Record* purchaseReturns = NULL;
 	
 	if (change > 0) {
 		// If able to read, get the current quantity available
 		// TODO: Get value from database, see if purchase can be made
-		purchaseReturnSuccess = select("productInformation.txt", PRODUCT_ID_PK, productID);
+		purchaseReturns = select("productInformation.txt", PRODUCT_ID_PK, productID);
 	}
 	
 	// Update the quantity of a product in productInformation; reflect changes in billingInformation and customerOrder
 	// TODO: Check if client has permission to access productInformation, billingInformation, and customerOrder
 	//purchaseReturnSuccess = database(UPDATE, QUANTITY_A, "productInformation.txt", PRODUCT_ID, productID);
 	
-	return purchaseReturnSuccess;
+	return purchaseReturns;
+}
+
+struct productInfo* getProduct() {
+	return (struct productInfo*) malloc(sizeof(struct productInfo));
 }
 
 void viewProductsSeller(char* sellerID) {
 	// Select and display all products where this client is the seller
-	select("productInformation.txt", SELLER_ID_FK, sellerID);
+	Record* products = select("productInformation.txt", SELLER_ID_FK, sellerID);
+	
+	// Get column headers
+	char hdrText[] = "Product ID|Product Description|Seller ID|Quantity Available|Unit Price|";
+	Record* headers = (Record*) malloc(sizeof(Record));
+	headers->current = (char*) malloc(sizeof(char) * (strlen(hdrText) + 1));
+	headers->next = NULL;
+	strcpy((char*) (headers->current), hdrText);
+	
+	// Display headers (headers freed in printRecords)
+	printRecords(headers, 5);
+	
+	// Display records (records freed in printRecords)
+	printRecords(products, 5);
 }
 
 void viewProductsBuyer(char* productID) {
 	// Select and display information for the buyer's desired product
-	select("productInformation.txt", PRODUCT_ID_PK, productID);
+	Record* products = select("productInformation.txt", PRODUCT_ID_PK, productID);
+	
+	// Get column headers
+	char hdrText[] = "Product ID|Product Description|Seller ID|Quantity Available|Unit Price|";
+	Record* headers = (Record*) malloc(sizeof(Record));
+	headers->current = (char*) malloc(sizeof(char) * (strlen(hdrText) + 1));
+	headers->next = NULL;
+	strcpy((char*) (headers->current), hdrText);
+	
+	// Display headers (headers freed in printRecords)
+	printRecords(headers, 5);
+	
+	// Display records (records freed in printRecords)
+	printRecords(products, 5);
 }
 
 void viewOrdersSeller(char* sellerID) {
 	// Select all products where this client is the seller
-	select("productInformation.txt", SELLER_ID_FK, sellerID);
+	Record* sellers = select("productInformation.txt", SELLER_ID_FK, sellerID);
+	
+	//printRecords(orders);
+	//free(orders);
 	
 	// Select and display all orders for each of these products
 	// TODO: Linked list, "while node != NULL, select on ProductID"
-	select("customerOrder.txt", PRODUCT_ID_FK, sellerID);
+	Record* orders = select("customerOrder.txt", PRODUCT_ID_FK, "");
 }
 
 void viewOrdersBuyer(char* buyerID) {
 	// Select all orders where this client is the buyer
-	select("billingInformation.txt", BUYER_ID_FK, buyerID);
+	Record* buyers = select("billingInformation.txt", BUYER_ID_FK, buyerID);
 	
 	// Select and display all orders where this client is the buyer
 	// TODO: Linked list, "while node != NULL, select on OrderID"
-	select("customerOrder.txt", ORDER_ID_FK, buyerID);
+	Record* orders = select("customerOrder.txt", ORDER_ID_FK, "");
 }
 
 void viewBillingInfo(char* buyerID) {
 	// Select and display all orders where this client is the buyer
-	select("billingInformation.txt", BUYER_ID_PK, buyerID);
+	Record* orders = select("billingInformation.txt", BUYER_ID_PK, buyerID);
+	
+	// Get column headers
+	char hdrText[] = "Order ID|Customer ID|Customer Address|Total Order Price|";
+	Record* headers = (Record*) malloc(sizeof(Record));
+	headers->current = (char*) malloc(sizeof(char) * (strlen(hdrText) + 1));
+	headers->next = NULL;
+	strcpy((char*) (headers->current), hdrText);
+	
+	// Display headers (headers freed in printRecords)
+	printRecords(headers, 4);
+	
+	// Display records (records freed in printRecords)
+	printRecords(orders, 4);
+	
+	//free(orders)
 }

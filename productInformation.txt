@@ -1,0 +1,5 @@
+1|Widget|4|90|2.00|
+2|Widget Spinner|4|40|15.00|
+3|Basketball|3|456|12.00|
+4|Toaster|5|12|50.00|
+5|Deodorant|2|301|14.00|

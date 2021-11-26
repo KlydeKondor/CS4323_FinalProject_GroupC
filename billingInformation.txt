@@ -1,0 +1,6 @@
+1|5|300 Linked List Parkway|194.00|
+2|4|789 Address Way|60.00|
+3|2|345 Address Avenue|365.00|
+4|1|234 Address Lane|36.00|
+5|3|456 Address Boulevard|78.00|
+6|5|300 Linked List Parkway|210.00|
