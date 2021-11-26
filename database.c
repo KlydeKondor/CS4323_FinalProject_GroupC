@@ -34,8 +34,11 @@ int main() {
 	printf("\nVIEW PRODUCTS SELLER...\n");
 	viewProductsSeller("4");
 	
-	// TODO: viewOrdersSeller(int sellerID)
-	// TODO: viewOrdersBuyer(int buyerID)
+	printf("\nVIEW ORDERS SELLER...\n");
+	viewOrdersSeller("3");
+	
+	printf("\nVIEW ORDERS BUYER...\n");
+	viewOrdersSeller("2");
 	
 	printf("\nVIEW PRODUCTS BUYER...\n");
 	viewProductsBuyer("3");
