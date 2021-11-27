@@ -143,7 +143,7 @@ void setBillingInformation()
    
    
    printf("%s\n","\nPlease enter your Total Order Price:");
-   scanf("%f", totalOrderPrice);
+   scanf("%f", &totalOrderPrice);
    printf( "\ntotalOrderPrice entered: %f ", totalOrderPrice);
    
    printf("%s\n", "Billing Information has been sent to the database."); 

@@ -14,7 +14,7 @@
 #define CLIENT_SOCKET 0
 #define SERVER_SOCKET 1
 
-_Noreturn void* serverListenHandle(void* data) {
+void* clientToDataServerHandle(void* data) {
     void** unpackedData = (void**)data;
     struct socket_t* clientSocket = (struct socket_t*) unpackedData[CLIENT_SOCKET];
     struct socket_t* serverSocket = (struct socket_t*) unpackedData[SERVER_SOCKET];
@@ -23,13 +23,41 @@ _Noreturn void* serverListenHandle(void* data) {
         char buffer[MAX_TCP_BUFFER_SIZE];
         readSocket(clientSocket, buffer);
 
-        // Handling of client traffic will go here
-		RegisterClient();
+        // Handling of client traffic to the server will go here
+        // RegisterClient(); This appears to be for client input, this should go on the client_main not the server
     }
+}
 
+void* dataServerToClientHandle(void* data) {
+    void** unpackedData = (void**)data;
+    struct socket_t* clientSocket = (struct socket_t*) unpackedData[CLIENT_SOCKET];
+    struct socket_t* serverSocket = (struct socket_t*) unpackedData[SERVER_SOCKET];
+
+    while(1) {
+        char buffer[MAX_TCP_BUFFER_SIZE];
+        readSocket(serverSocket, buffer);
+
+    }
+}
+
+void* threadSpawnHandle(void* data) {
+    pthread_t clientToDataServerThread;
+    pthread_t dataServerToClientThread;
+
+    pthread_create(&clientToDataServerThread, NULL, clientToDataServerHandle, data);
+    pthread_create(&dataServerToClientThread, NULL, dataServerToClientHandle, data);
+
+    pthread_join(clientToDataServerThread, NULL);
+    pthread_join(dataServerToClientThread, NULL);
+
+    void** unpackedData = (void**)data;
+    struct socket_t* clientSocket = (struct socket_t*) unpackedData[CLIENT_SOCKET];
+    struct socket_t* serverSocket = (struct socket_t*) unpackedData[SERVER_SOCKET];
     freeSocket(clientSocket);
     freeSocket(serverSocket);
     free(data);
+
+    return NULL;
 }
 
 int main(int argc, char **argv) {
@@ -66,6 +94,6 @@ int main(int argc, char **argv) {
         packedData[SERVER_SOCKET] = dataServerSocket;
 
         pthread_t clientServerThread;
-        pthread_create(&clientServerThread, NULL, serverListenHandle, packedData);
+        pthread_create(&clientServerThread, NULL, threadSpawnHandle, packedData);
     }
 }
