@@ -18,7 +18,61 @@
 // ServerToDataserverAPI.h
 //
 ///////////////////////////////////////////////
+bool registerNewClient(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress) {
 
+}
+
+bool updateClientInfo(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress) {
+
+}
+
+bool addProduct(struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price) {
+
+}
+
+bool updateProduct(struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price) {
+
+}
+
+bool deleteProduct(struct socket_t* dataServerSocket, int productID) {
+
+}
+
+bool updateProductQuantity(struct socket_t* dataServerSocket, int productID, int quantity) {
+
+}
+
+bool updateProductPrice(struct socket_t* dataServerSocket, int productID, float price) {
+
+}
+
+bool updateBillingInfo(struct socket_t* dataServerSocket, int orderID, int clientID, char* address, float totalPrice) {
+
+}
+
+bool addCustomerOrder(struct socket_t* dataServerSocket, int orderID, int productID, int quantity, char* address, float totalPrice) {
+
+}
+
+char* getAllSellerProducts(struct socket_t* dataServerSocket, int clientID) {
+
+}
+
+char* getProductInfo(struct socket_t* dataServerSocket, int productID) {
+
+}
+
+char* getAllSellerOrders(struct socket_t* dataServerSocket, int clientID) {
+
+}
+
+char* getAllBuyOrders(struct socket_t* dataServerSocket, int clientID) {
+
+}
+
+char* getBillingInfo(struct socket_t* dataServerSocket, int clientID) {
+
+}
 
 ///////////////////////////////////////////////
 //

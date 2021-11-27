@@ -17,7 +17,7 @@
 void* clientToDataServerHandle(void* data) {
     void** unpackedData = (void**)data;
     struct socket_t* clientSocket = (struct socket_t*) unpackedData[CLIENT_SOCKET];
-    struct socket_t* serverSocket = (struct socket_t*) unpackedData[SERVER_SOCKET];
+    struct socket_t* dataServerSocket = (struct socket_t*) unpackedData[SERVER_SOCKET];
 
     while(1) {
         char buffer[MAX_TCP_BUFFER_SIZE];
@@ -26,18 +26,22 @@ void* clientToDataServerHandle(void* data) {
         // Handling of client traffic to the server will go here
         // RegisterClient(); This appears to be for client input, this should go on the client_main not the server
     }
+
+    return NULL;
 }
 
 void* dataServerToClientHandle(void* data) {
     void** unpackedData = (void**)data;
     struct socket_t* clientSocket = (struct socket_t*) unpackedData[CLIENT_SOCKET];
-    struct socket_t* serverSocket = (struct socket_t*) unpackedData[SERVER_SOCKET];
+    struct socket_t* dataServerSocket = (struct socket_t*) unpackedData[SERVER_SOCKET];
 
     while(1) {
         char buffer[MAX_TCP_BUFFER_SIZE];
-        readSocket(serverSocket, buffer);
+        readSocket(dataServerSocket, buffer);
 
     }
+
+    return NULL;
 }
 
 void* threadSpawnHandle(void* data) {

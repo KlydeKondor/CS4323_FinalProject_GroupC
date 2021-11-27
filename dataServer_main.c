@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include "dataServerNetwork.h"
+#include "serverToDataserverAPI.h"
 #include "socketConnection.h"
 #include "util.h"
 
