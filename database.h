@@ -8,6 +8,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifndef DATABASE_H
+#define DATABASE_H
+
 // Buffer variable
 #define BUFF_SIZE 8192
 
@@ -764,3 +767,5 @@ void viewBillingInfo(char* buyerID) {
 	printRecords(orders, 4);
 	printf("\n");
 }
+
+#endif //DATABASE_H

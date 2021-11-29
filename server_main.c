@@ -30,29 +30,11 @@ void* clientToDataServerHandle(void* data) {
     return NULL;
 }
 
-void* dataServerToClientHandle(void* data) {
-    void** unpackedData = (void**)data;
-    struct socket_t* clientSocket = (struct socket_t*) unpackedData[CLIENT_SOCKET];
-    struct socket_t* dataServerSocket = (struct socket_t*) unpackedData[SERVER_SOCKET];
-
-    while(1) {
-        char buffer[MAX_TCP_BUFFER_SIZE];
-        readSocket(dataServerSocket, buffer);
-
-    }
-
-    return NULL;
-}
-
 void* threadSpawnHandle(void* data) {
     pthread_t clientToDataServerThread;
-    pthread_t dataServerToClientThread;
 
     pthread_create(&clientToDataServerThread, NULL, clientToDataServerHandle, data);
-    pthread_create(&dataServerToClientThread, NULL, dataServerToClientHandle, data);
-
     pthread_join(clientToDataServerThread, NULL);
-    pthread_join(dataServerToClientThread, NULL);
 
     void** unpackedData = (void**)data;
     struct socket_t* clientSocket = (struct socket_t*) unpackedData[CLIENT_SOCKET];

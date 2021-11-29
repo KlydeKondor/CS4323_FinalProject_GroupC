@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include "linkedList.h"
 #include "readWriteLock.h"
+#include "serverToDataserverAPI.h"
 #include "socketConnection.h"
 #include "util.h"
 
@@ -18,60 +19,309 @@
 // ServerToDataserverAPI.h
 //
 ///////////////////////////////////////////////
-bool registerNewClient(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress) {
+static bool handleClient(char* command, struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress) {
+    assert(command != NULL);
 
+    char message[MAX_TCP_BUFFER_SIZE];
+    sprintf(message, "%s%s%d|%s|%s|%s|",
+            command,
+            COMMAND_DELIMITER,
+            clientID,
+            clientName,
+            clientNumber,
+            clientAddress);
+
+    writeSocket(dataServerSocket, message);
+    readSocket(dataServerSocket, message);
+
+    if(strcmp(message, COMMAND_SUCCESS) == 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+bool registerNewClient(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress) {
+    assert(dataServerSocket != NULL);
+    assert(clientName != NULL);
+    assert(clientNumber != NULL);
+    assert(clientAddress != NULL);
+
+    return handleClient(REGISTER_CLIENT, dataServerSocket, clientID, clientName, clientNumber, clientAddress);
 }
 
 bool updateClientInfo(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress) {
+    assert(dataServerSocket != NULL);
+    assert(clientName != NULL);
+    assert(clientNumber != NULL);
+    assert(clientAddress != NULL);
 
+    return handleClient(UPDATE_CLIENT, dataServerSocket, clientID, clientName, clientNumber, clientAddress);
+}
+
+static bool handleProduct(char* command, struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price) {
+    assert(command != NULL);
+
+    char message[MAX_TCP_BUFFER_SIZE];
+    sprintf(message, "%s%s%d|%s|%s|%d|%f|",
+            command,
+            COMMAND_DELIMITER,
+            productID,
+            productDescription,
+            sellerID,
+            quantity,
+            price);
+
+    writeSocket(dataServerSocket, message);
+    readSocket(dataServerSocket, message);
+
+    if(strcmp(message, COMMAND_SUCCESS) == 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 bool addProduct(struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price) {
+    assert(dataServerSocket != NULL);
+    assert(productID > 0);
+    assert(productDescription != NULL);
+    assert(sellerID != NULL);
+    assert(quantity > 0);
+    assert(price > 0);
 
+    handleProduct(ADD_PRODUCT, dataServerSocket, productID, productDescription, sellerID, quantity, price);
 }
 
 bool updateProduct(struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price) {
+    assert(dataServerSocket != NULL);
+    assert(productID > 0);
+    assert(productDescription != NULL);
+    assert(sellerID != NULL);
+    assert(quantity > 0);
+    assert(price > 0);
 
+    handleProduct(UPDATE_PRODUCT, dataServerSocket, productID, productDescription, sellerID, quantity, price);
 }
 
 bool deleteProduct(struct socket_t* dataServerSocket, int productID) {
+    assert(dataServerSocket != NULL);
+    assert(productID > 0);
 
+    char message[MAX_TCP_BUFFER_SIZE];
+    sprintf(message, "%s%s%d",
+            DELETE_PRODUCT,
+            COMMAND_DELIMITER,
+            productID);
+
+    writeSocket(dataServerSocket, message);
+    readSocket(dataServerSocket, message);
+
+    if(strcmp(message, COMMAND_SUCCESS) == 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 bool updateProductQuantity(struct socket_t* dataServerSocket, int productID, int quantity) {
+    assert(dataServerSocket != NULL);
+    assert(productID > 0);
+    assert(quantity > 0);
 
+    char message[MAX_TCP_BUFFER_SIZE];
+    sprintf(message, "%s%s%d|%d|",
+            DELETE_PRODUCT,
+            COMMAND_DELIMITER,
+            productID,
+            quantity);
+
+    writeSocket(dataServerSocket, message);
+    readSocket(dataServerSocket, message);
+
+    if(strcmp(message, COMMAND_SUCCESS) == 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 bool updateProductPrice(struct socket_t* dataServerSocket, int productID, float price) {
+    assert(dataServerSocket != NULL);
+    assert(productID > 0);
+    assert(price > 0);
 
+    char message[MAX_TCP_BUFFER_SIZE];
+    sprintf(message, "%s%s%d|%f|",
+            DELETE_PRODUCT,
+            COMMAND_DELIMITER,
+            productID,
+            price);
+
+    writeSocket(dataServerSocket, message);
+    readSocket(dataServerSocket, message);
+
+    if(strcmp(message, COMMAND_SUCCESS) == 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 bool updateBillingInfo(struct socket_t* dataServerSocket, int orderID, int clientID, char* address, float totalPrice) {
+    assert(dataServerSocket != NULL);
+    assert(orderID > 0);
+    assert(clientID > 0);
+    assert(address != NULL);
+    assert(totalPrice > 0);
 
+    char message[MAX_TCP_BUFFER_SIZE];
+    sprintf(message, "%s%s%d|%d|%s|%f|",
+            DELETE_PRODUCT,
+            COMMAND_DELIMITER,
+            orderID,
+            clientID,
+            address,
+            totalPrice);
+
+    writeSocket(dataServerSocket, message);
+    readSocket(dataServerSocket, message);
+
+    if(strcmp(message, COMMAND_SUCCESS) == 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 bool addCustomerOrder(struct socket_t* dataServerSocket, int orderID, int productID, int quantity, char* address, float totalPrice) {
+    assert(dataServerSocket != NULL);
+    assert(orderID > 0);
+    assert(productID > 0);
+    assert(quantity > 0);
+    assert(address != NULL);
+    assert(totalPrice > 0);
 
+    char message[MAX_TCP_BUFFER_SIZE];
+    sprintf(message, "%s%s%d|%d|%d|%s|%f|",
+            DELETE_PRODUCT,
+            COMMAND_DELIMITER,
+            orderID,
+            productID,
+            quantity,
+            address,
+            totalPrice);
+
+    writeSocket(dataServerSocket, message);
+    readSocket(dataServerSocket, message);
+
+    if(strcmp(message, COMMAND_SUCCESS) == 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 char* getAllSellerProducts(struct socket_t* dataServerSocket, int clientID) {
+    assert(dataServerSocket != NULL);
+    assert(clientID > 0);
 
+    char message[MAX_TCP_BUFFER_SIZE];
+    sprintf(message, "%s%s%d",
+            DELETE_PRODUCT,
+            COMMAND_DELIMITER,
+            clientID);
+
+    writeSocket(dataServerSocket, message);
+    readSocket(dataServerSocket, message);
+
+    char* returnMessage = mallocString(strlen(message) + 2);
+    strcpy(returnMessage, message);
+
+    return returnMessage;
 }
 
 char* getProductInfo(struct socket_t* dataServerSocket, int productID) {
+    assert(dataServerSocket != NULL);
+    assert(productID > 0);
 
+    char message[MAX_TCP_BUFFER_SIZE];
+    sprintf(message, "%s%s%d",
+            DELETE_PRODUCT,
+            COMMAND_DELIMITER,
+            productID);
+
+    writeSocket(dataServerSocket, message);
+    readSocket(dataServerSocket, message);
+
+    char* returnMessage = mallocString(strlen(message) + 2);
+    strcpy(returnMessage, message);
+
+    return returnMessage;
 }
 
 char* getAllSellerOrders(struct socket_t* dataServerSocket, int clientID) {
+    assert(dataServerSocket != NULL);
+    assert(clientID > 0);
 
+    char message[MAX_TCP_BUFFER_SIZE];
+    sprintf(message, "%s%s%d",
+            DELETE_PRODUCT,
+            COMMAND_DELIMITER,
+            clientID);
+
+    writeSocket(dataServerSocket, message);
+    readSocket(dataServerSocket, message);
+
+    char* returnMessage = mallocString(strlen(message) + 2);
+    strcpy(returnMessage, message);
+
+    return returnMessage;
 }
 
 char* getAllBuyOrders(struct socket_t* dataServerSocket, int clientID) {
+    assert(dataServerSocket != NULL);
+    assert(clientID > 0);
 
+    char message[MAX_TCP_BUFFER_SIZE];
+    sprintf(message, "%s%s%d",
+            DELETE_PRODUCT,
+            COMMAND_DELIMITER,
+            clientID);
+
+    writeSocket(dataServerSocket, message);
+    readSocket(dataServerSocket, message);
+
+    char* returnMessage = mallocString(strlen(message) + 2);
+    strcpy(returnMessage, message);
+
+    return returnMessage;
 }
 
 char* getBillingInfo(struct socket_t* dataServerSocket, int clientID) {
+    assert(dataServerSocket != NULL);
+    assert(clientID > 0);
 
+    char message[MAX_TCP_BUFFER_SIZE];
+    sprintf(message, "%s%s%d",
+            DELETE_PRODUCT,
+            COMMAND_DELIMITER,
+            clientID);
+
+    writeSocket(dataServerSocket, message);
+    readSocket(dataServerSocket, message);
+
+    char* returnMessage = mallocString(strlen(message) + 2);
+    strcpy(returnMessage, message);
+
+    return returnMessage;
 }
 
 ///////////////////////////////////////////////

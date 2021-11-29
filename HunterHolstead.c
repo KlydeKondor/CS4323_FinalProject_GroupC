@@ -143,7 +143,7 @@ void setBillingInformation()
    
    
    printf("%s\n","\nPlease enter your Total Order Price:");
-   scanf("%f", totalOrderPrice);
+   scanf("%f", &totalOrderPrice);
    printf( "\ntotalOrderPrice entered: %f ", totalOrderPrice);
    
    printf("%s\n", "Billing Information has been sent to the database."); 
@@ -186,13 +186,15 @@ void setCustomerOrder()
    
    
    printf("%s\n","\nPlease enter your Total Order Price:");
-   scanf("%f", totalOrderPrice);
+   scanf("%f", &totalOrderPrice);
    printf( "\ntotalOrderPrice entered: %f ", totalOrderPrice);
    
    printf("%s\n", "Customer Order has been sent to the database.");  
    //sendToCODatabase(orderID,productID,productQuantity,customerContactAdress,totalOrderPrice);
 	
 }
+
+void runClient(int *clientType);
 
 //• allow the clients to register in the system, 
 void RegisterClient()
