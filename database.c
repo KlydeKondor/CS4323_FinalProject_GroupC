@@ -14,7 +14,7 @@ int main() {
 	// TODO: Uniqueness checking
 	// Insert a dummy row
 	printf("\nINSERT TEST...\n");
-	char dummyData[] = "5|Jane Doe|555-867-5309|123 Address Road|";
+	char dummyData[] = "Jane Doe|555-867-5309|123 Address Road|";
 	registerClient(dummyData, 1);
 	
 	// Update the dummy row (comment out to verify that the row  is being added)
@@ -24,7 +24,7 @@ int main() {
 	
 	// Select the dummy row
 	printf("\nSELECT TEST...\n");
-	selectClient(1);
+	selectClient(1, "5");
 	
 	// Delete the dummy row (comment out to verify that the row is being added/updated)
 	printf("\nDELETE TEST...\n");
@@ -45,6 +45,15 @@ int main() {
 	
 	printf("\nVIEW BILLING INFO...\n");
 	viewBillingInfo("2");
+	
+	printf("\nADD PRODUCT...\n");
+	addProduct("The Product!", "4", 10, 1.54f);
+	
+	printf("\nDROP PRODUCT...\n");
+	removeProduct("6");
+	
+	printf("\nUPDATE QUANTITY...\n");
+	updateQuantity("8", 5);
 	
 	return 0;
 }

@@ -81,6 +81,81 @@ struct customerOrder {
 	float totalOrderPrice;
 };
 
+char* getProductDB(char* productID, char* productDesc, int sellerID, int quantity, float price) {
+	// Create a buffer and format the product information
+	char newProduct[BUFF_SIZE];
+	
+	// Product ID's pipe character is handled outside this function as needed
+	sprintf(newProduct, "%s%s|%d|%d|%f|", productID, productDesc, sellerID, quantity, price);
+	
+	// malloc a string and copy the buffer's contents into it
+	printf("%d\n", strlen(newProduct));
+	char* resProduct = (char*) malloc(sizeof(char) * 2 * strlen(newProduct) + 2);
+	strcpy(resProduct, newProduct);
+	printf("Why\n");
+	
+	// resProduct should be freed outside this function
+	return resProduct;
+}
+
+struct productInfo* getProductStruct(char* valDB) {
+	int cols = 5;
+	struct productInfo* retProduct = malloc(sizeof(struct productInfo*));
+	
+	// Buffer for the current DB row
+	char getVal[BUFF_SIZE];
+	//char* dbVal = (char*) malloc(BUFF_SIZE * sizeof(char)); // Char pointer for the current DB column
+	char dbVal[BUFF_SIZE];
+	const char separator[2] = "|"; // Delimiter to be used in the strtok function
+	
+	// Get the leftmost column
+	strcpy(getVal, valDB);
+	strcpy(dbVal, strtok(getVal, separator));
+	
+	int i = 0;
+	while(i < cols) {
+		switch(i) {
+		case 0:
+			retProduct->productID = atoi(dbVal);
+			break;
+		case 1:
+			retProduct->productDesc = dbVal;
+			break;
+		case 2:
+			retProduct->sellerID = atoi(dbVal);
+			break;
+		case 3:
+			retProduct->quantityAvailable = atoi(dbVal);
+			break;
+		case 4:
+			retProduct->unitPrice = atof(dbVal);
+			break;
+		}
+		
+		// Passing NULL to get the next dbVal
+		strcpy(dbVal, strtok(NULL, separator));
+		i++;
+	}
+	
+	//free(dbVal);
+	
+	return retProduct;
+}
+
+// TODO
+char* getClientDB(char* productDesc, char* sellerID, int quantity, float price) {
+	// Create a buffer and format the product information
+	char newProduct[BUFF_SIZE];
+	sprintf(newProduct, "%s|%s|%d|%f|", productDesc, sellerID, quantity, price);
+	
+	// malloc a string and copy the buffer's contents into it
+	char* resProduct = (char*) malloc(sizeof(char) * strlen(newProduct) + 2);
+	strcpy(resProduct, newProduct);
+	
+	// resProduct should be freed outside this function
+	return resProduct;
+}
+
 // Print out all results found
 void printRecords(Record* records, int cols) {
 	printf("\n");
@@ -260,13 +335,13 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, int whereCol, const char* w
 					else if (cmd == INSERT) {
 						// If Insert, place the new row and the old row
 						fprintf(fNewDB, "%d|", curRow);
+						rowsAffected = curRow; // Return the new primary key
 						fputs(newRow, fNewDB);
 						fputc('\n', fNewDB);
 						curRow++;
 						
 						// Place fullRow after
 						fputs(fullRow, fNewDB);
-						fputc('\n', fNewDB);
 					}
 					// If Delete, drop the record by omission
 					
@@ -274,7 +349,7 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, int whereCol, const char* w
 					if (rowsAffected < 0) {
 						rowsAffected = 1;
 					}
-					else {
+					else if (cmd != INSERT) {
 						rowsAffected++;
 					}
 					
@@ -305,7 +380,7 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, int whereCol, const char* w
 		fprintf(fNewDB, "%d|", curRow);
 		fputs(newRow, fNewDB);
 		fputc('\n', fNewDB);
-		rowsAffected = 1;
+		rowsAffected = curRow; // Return the new primary key
 	}
 	
 	free(fullRow);
@@ -317,7 +392,7 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, int whereCol, const char* w
 // Selects the first row where some field (whereCol) matches the search criterion (whereVal)
 // TODO: Accomodate multiple records
 // 
-Record* select(const char* tbl, int whereCol, char* whereVal) {
+Record* rselect(const char* tbl, int whereCol, char* whereVal) {
 	int dbSuccess = 0;
 	
 	Record* resList = (Record*) malloc(sizeof(Record));
@@ -364,7 +439,7 @@ Record* select(const char* tbl, int whereCol, char* whereVal) {
 // Return:
 //   int dbSuccess (0 on success, -1 or -2 on failure)
 int insert(const char* tbl, char* setVal) {
-	int dbSuccess = 0, byteReset = -1;
+	int dbSuccess = 0;
 	
 	// File pointer for the client's table
 	FILE* fDB;
@@ -383,11 +458,11 @@ int insert(const char* tbl, char* setVal) {
 	getTempName(dbTemp, prefix, tbl);
 	
 	// Perform the update
-	byteReset = findAndReplaceRow(fDB, dbTemp, 0, "", setVal, INSERT);
+	dbSuccess = findAndReplaceRow(fDB, dbTemp, 0, "", setVal, INSERT);
 	
 	// If the value was found, rename the dbTemp file to overwrite the existing DB
 	fclose(fDB);
-	if (byteReset != -1) {
+	if (dbSuccess > -1) {
 		// Set the temp file's name to the original file's name
 		remove(tbl);
 		if (rename(dbTemp, tbl)) {
@@ -395,6 +470,9 @@ int insert(const char* tbl, char* setVal) {
 			printf("Couldn't rename\n");
 			dbSuccess = -2;
 		}
+		
+		printf("Inserted with ID %d.\n", dbSuccess);
+		dbSuccess = 0; // Success
 	}
 	else {
 		// The whereVal was not found
@@ -407,30 +485,6 @@ int insert(const char* tbl, char* setVal) {
 	
 	free(dbTemp);
 			
-	return dbSuccess;
-}
-
-// Inserts a row at the end of the file
-// DEPRECATED: Does not generate primary key or ensure uniqueness
-int insert_old(const char* tbl, char* setVal) {
-	int dbSuccess = -1; // Failure
-	
-	// File pointer for the client's table
-	FILE* fDB;
-	
-	// A const char prefix for the DB's filename, and a pointer to the full temp name
-	char prefix[] = "temp_";
-	char* dbTemp;
-	
-	// Open in append mode
-	fDB = fopen(tbl, "a");
-	if (fDB != NULL) {
-		fputs(setVal, fDB);
-		fputc('\n', fDB); // Add the newline character separately
-		fclose(fDB);
-		dbSuccess = 0;
-	}
-	
 	return dbSuccess;
 }
 
@@ -474,6 +528,14 @@ int update(const char* tbl, char* setVal, int whereCol, char* whereVal) {
 			printf("Couldn't rename\n");
 			dbSuccess = -2;
 		}
+		
+		printf("Updated %d record", dbSuccess);
+		if (dbSuccess > 1) {
+			printf("s");
+		}
+		printf(".\n");
+		
+		dbSuccess = 0; // Success
 	}
 	else {
 		// The whereVal was not found (dbSuccess == -1)
@@ -519,7 +581,7 @@ int drop(const char* tbl, int whereCol, char* whereVal) {
 	
 	// If the value was found, rename the dbTemp file to overwrite the existing DB
 	fclose(fDB);
-	if (dbSuccess != -1) {
+	if (dbSuccess > -1) {
 		// Set the temp file's name to the original file's name
 		remove(tbl);
 		if (rename(dbTemp, tbl)) {
@@ -527,6 +589,12 @@ int drop(const char* tbl, int whereCol, char* whereVal) {
 			printf("Couldn't rename\n");
 			dbSuccess = -2;
 		}
+		
+		printf("Dropped %d record", dbSuccess);
+		if (dbSuccess > 1) {
+			printf("s");
+		}
+		printf(".\n");
 	}
 	else {
 		// The whereVal was not found
@@ -565,19 +633,24 @@ int registerClient(char* registerData, int isCustomer) {
 	return registerSuccess;
 }
 
-// TESTING PURPOSES ONLY
-Record* selectClient(int isCustomer) {
+// Select an existing buyer or seller based on userID
+// Parameters:
+//   int isCustomer (flag; nonzero if buyer, 0 if seller)
+// 	 char* userID (the primary key for logging in)
+// Return:
+//   Record* rowsSelected (nodes containing client data; NULL if not found)
+Record* selectClient(int isCustomer, char* userID) {
 	Record* rowsSelected = NULL;
 	
 	// Select from sellerInformation or customerInformation
 	if (isCustomer) {
 		// TODO: Pass unique identifier to selectClient (currently hardcoded with CustomerID of 5)
 		// Select a customer's information
-		rowsSelected = select("customerInformation.txt", 0, "5");
+		rowsSelected = rselect("customerInformation.txt", 0, userID);
 	}
 	else {
 		// Select a seller's information
-		rowsSelected = select("sellerInformation.txt", 0, NULL);
+		rowsSelected = rselect("sellerInformation.txt", 0, userID);
 	}
 	
 	return rowsSelected;
@@ -623,19 +696,75 @@ int updateClient(char* registerData, int isCustomer) {
 	return rowsAffected;
 }
 
-int addRemoveProduct(struct productInfo* userProduct) {
-	int addRemoveSuccess = 0;
+int addProduct(char* productDesc, char* sellerID, int quantity, float price) {
+	int addSuccess = 0;
 	
-	// Insert or delete from productInformation
+	// Insert into productInformation
+	char* newProduct = getProductDB("", productDesc, atoi(sellerID), quantity, price);
+	addSuccess = insert("productInformation.txt", newProduct);
+	free(newProduct);
 	
-	
-	return addRemoveSuccess;
+	return addSuccess;
 }
 
-int updateQuantityPrice() {
+int removeProduct(char* productID) {
+	// Delete from productInformation
+	return drop("productInformation.txt", 0, productID);
+}
+
+int updateQuantity(char* productID, int change) {
+	int updateSuccess = 0;
+	
+	// Select the productID from the DB to get the current quantity
+	Record* updateProduct = rselect("productInformation.txt", PRODUCT_ID_PK, productID);
+	
+	if (updateProduct != NULL) {
+		// Retrieve the struct values and update quantity
+		struct productInfo* dbProduct = getProductStruct(updateProduct->current);
+		dbProduct->quantityAvailable += change;
+		printf("Burmple\n");
+		if (dbProduct->quantityAvailable < 0) {
+			// Validation failed (negative quantity)
+			printf("HI\n");
+			updateSuccess = -2;
+		}
+		else {
+			// Add a delimiter to the end of productID
+			char id[BUFF_SIZE];
+			sprintf(id, "%s|", productID);
+			printf("Burmple\n");
+			printf("ID: %s\n", id);
+			
+			// Get a string represenation of the record with the new quantity
+			char* newRow = getProductDB(id, dbProduct->productDesc, dbProduct->sellerID,
+				dbProduct->quantityAvailable, dbProduct->unitPrice);
+			
+			printf("NEW ROW: %s\n", newRow);
+			
+			// Update the quantity of the product in productInformation
+			update("productInformation.txt", newRow, PRODUCT_ID_PK, productID);
+			
+			// Free the malloced string data after writing
+			free(newRow);
+		}
+		
+		// Free dbProduct and updateProduct
+		free(dbProduct);
+		free(updateProduct);
+	}
+	else {
+		// Failure
+		updateSuccess = -1;
+	}
+		
+	return updateSuccess;
+}
+
+int updatePrice(char* productID, float newPrice) {
 	int updateSuccess = 0;
 	
 	// Update the quantity or price of a product in productInformation
+	
 	
 	return updateSuccess;
 }
@@ -646,7 +775,7 @@ Record* purchaseReturnProduct(char* productID, char* customerID, char* orderID, 
 	if (change > 0) {
 		// If able to read, get the current quantity available
 		// TODO: Get value from database, see if purchase can be made
-		purchaseReturns = select("productInformation.txt", PRODUCT_ID_PK, productID);
+		purchaseReturns = rselect("productInformation.txt", PRODUCT_ID_PK, productID);
 	}
 	
 	// Update the quantity of a product in productInformation; reflect changes in billingInformation and customerOrder
@@ -656,13 +785,9 @@ Record* purchaseReturnProduct(char* productID, char* customerID, char* orderID, 
 	return purchaseReturns;
 }
 
-struct productInfo* getProduct() {
-	return (struct productInfo*) malloc(sizeof(struct productInfo));
-}
-
 void viewProductsSeller(char* sellerID) {
 	// Select and display all products where this client is the seller
-	Record* products = select("productInformation.txt", SELLER_ID_FK, sellerID);
+	Record* products = rselect("productInformation.txt", SELLER_ID_FK, sellerID);
 	
 	// Get column headers
 	char hdrText[] = "Product ID|Product Description|Seller ID|Quantity Available|Unit Price|";
@@ -681,7 +806,7 @@ void viewProductsSeller(char* sellerID) {
 
 void viewProductsBuyer(char* productID) {
 	// Select and display information for the buyer's desired product
-	Record* products = select("productInformation.txt", PRODUCT_ID_PK, productID);
+	Record* product = rselect("productInformation.txt", PRODUCT_ID_PK, productID);
 	
 	// Get column headers
 	char hdrText[] = "Product ID|Product Description|Seller ID|Quantity Available|Unit Price|";
@@ -694,7 +819,7 @@ void viewProductsBuyer(char* productID) {
 	printRecords(headers, 5);
 	
 	// Display records (records freed in printRecords)
-	printRecords(products, 5);
+	printRecords(product, 5);
 	printf("\n");
 }
 
@@ -759,7 +884,7 @@ Record* selectLoop(Record* searchRecords, const char* tbl, int searchCol) {
 	Record* outRecords = NULL;
 	
 	while (searchRecords != NULL && searchRecords->current != NULL) {
-		Record* curRecords = select(tbl, searchCol, (char*) (searchRecords->current));
+		Record* curRecords = rselect(tbl, searchCol, (char*) (searchRecords->current));
 		
 		// Free the row's data
 		if (searchRecords->next == NULL || searchRecords->next->current == NULL) {
@@ -796,7 +921,7 @@ Record* selectLoop(Record* searchRecords, const char* tbl, int searchCol) {
 
 void viewOrdersSeller(char* sellerID) {
 	// Select all products where this client is the seller
-	Record* products = select("productInformation.txt", SELLER_ID_FK, sellerID);
+	Record* products = rselect("productInformation.txt", SELLER_ID_FK, sellerID);
 	
 	// Extract each Product ID from products
 	Record* productIDs = (Record*) malloc(sizeof(Record));
@@ -824,7 +949,7 @@ void viewOrdersSeller(char* sellerID) {
 
 void viewOrdersBuyer(char* buyerID) {
 	// Select all billings where this client is the buyer
-	Record* billings = select("billingInformation.txt", BUYER_ID_FK, buyerID);
+	Record* billings = rselect("billingInformation.txt", BUYER_ID_FK, buyerID);
 	
 	// Extract each Order ID from billings
 	Record* orderIDs = (Record*) malloc(sizeof(Record));
@@ -852,7 +977,7 @@ void viewOrdersBuyer(char* buyerID) {
 
 void viewBillingInfo(char* buyerID) {
 	// Select and display all orders where this client is the buyer
-	Record* orders = select("billingInformation.txt", BUYER_ID_PK, buyerID);
+	Record* orders = rselect("billingInformation.txt", BUYER_ID_PK, buyerID);
 	
 	// Get column headers
 	char hdrText[] = "Order ID|Customer ID|Customer Address|Total Order Price|";
