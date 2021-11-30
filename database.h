@@ -226,7 +226,7 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, int whereCol, const char* w
 	FILE* fNewDB = fopen(dbName, "w");
 	
 	// Buffer variables
-	int foundLength = -1; // Will record the length of the line in which whereVal is found
+	int rowsAffected = -1; // Will record the number of rows affected
 	char getVal[BUFF_SIZE]; // Buffer for the current DB row
 	char* fullRow = (char*) malloc(BUFF_SIZE * sizeof(char)); // Char pointer for the current DB row
 	char* dbVal = (char*) malloc(BUFF_SIZE * sizeof(char)); // Char pointer for the current DB column
@@ -251,9 +251,6 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, int whereCol, const char* w
 			// Check dbVal vs whereVal
 			if (curCol == whereCol) {
 				if (strcmp(dbVal, whereVal) == 0 || (cmd == INSERT && atoi(dbVal) != curRow)) {
-					// Record the length of the last row
-					foundLength = (strlen(fullRow) + 1) * sizeof(char);
-					
 					// Check the command
 					if (cmd == UPDATE) {
 						// If Update, place the new row
@@ -272,6 +269,14 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, int whereCol, const char* w
 						fputc('\n', fNewDB);
 					}
 					// If Delete, drop the record by omission
+					
+					// Found; increment rowsAffected
+					if (rowsAffected < 0) {
+						rowsAffected = 1;
+					}
+					else {
+						rowsAffected++;
+					}
 					
 					// Skip placing the existing row
 					goto found;
@@ -295,18 +300,18 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, int whereCol, const char* w
 	}
 	
 	// If not found, return -1 (unless INSERT, in which case insert at end)
-	if (foundLength < 0 && cmd == INSERT) {
+	if (rowsAffected < 0 && cmd == INSERT) {
 		// If Insert, place the new row (curRow is the new primary key)
 		fprintf(fNewDB, "%d|", curRow);
 		fputs(newRow, fNewDB);
 		fputc('\n', fNewDB);
-		foundLength = 1;
+		rowsAffected = 1;
 	}
 	
 	free(fullRow);
 	free(dbVal);
 	fclose(fNewDB);
-	return foundLength;
+	return rowsAffected;
 }
 
 // Selects the first row where some field (whereCol) matches the search criterion (whereVal)
@@ -430,7 +435,13 @@ int insert_old(const char* tbl, char* setVal) {
 }
 
 // Updates one or more records where some field (whereCol) matches some criterion (whereVal)
-//
+// Parameters:
+//   const char* tbl (the DB text file's name)
+//   char* setVal (the row to be inserted)
+//   int whereCol (the column to be searched against)
+//   char* whereVal (the value to be searched for)
+// Return:
+//   int dbSuccess (0 on success, -1 or -2 on failure)
 int update(const char* tbl, char* setVal, int whereCol, char* whereVal) {
 	int dbSuccess = 0, byteReset = -1;
 	
@@ -451,11 +462,11 @@ int update(const char* tbl, char* setVal, int whereCol, char* whereVal) {
 	getTempName(dbTemp, prefix, tbl);
 	
 	// Perform the update
-	byteReset = findAndReplaceRow(fDB, dbTemp, whereCol, whereVal, setVal, UPDATE);
+	dbSuccess = findAndReplaceRow(fDB, dbTemp, whereCol, whereVal, setVal, UPDATE);
 	
 	// If the value was found, rename the dbTemp file to overwrite the existing DB
 	fclose(fDB);
-	if (byteReset != -1) {
+	if (dbSuccess > -1) {
 		// Set the temp file's name to the original file's name
 		remove(tbl);
 		if (rename(dbTemp, tbl)) {
@@ -465,12 +476,11 @@ int update(const char* tbl, char* setVal, int whereCol, char* whereVal) {
 		}
 	}
 	else {
-		// The whereVal was not found
+		// The whereVal was not found (dbSuccess == -1)
 		printf("Not found\n");
 		
 		// Remove the temp file
 		remove(dbTemp);
-		dbSuccess = 1;
 	}
 	
 	free(dbTemp);
@@ -479,7 +489,12 @@ int update(const char* tbl, char* setVal, int whereCol, char* whereVal) {
 }
 
 // Deletes one or more rows where some field (whereCol) matches some criterion (whereVal)
-//
+// Parameters:
+//   const char* tbl (the DB text file's name)
+//   int whereCol (the column to be searched against)
+//   char* whereVal (the value to be searched for)
+// Return:
+//   int dbSuccess (0 on success, -1 or -2 on failure)
 int drop(const char* tbl, int whereCol, char* whereVal) {
 	int dbSuccess = 0, byteReset = -1;
 	
@@ -500,11 +515,11 @@ int drop(const char* tbl, int whereCol, char* whereVal) {
 	getTempName(dbTemp, prefix, tbl);
 	
 	// Perform the deletion
-	byteReset = findAndReplaceRow(fDB, dbTemp, whereCol, whereVal, NULL, DELETE);
+	dbSuccess = findAndReplaceRow(fDB, dbTemp, whereCol, whereVal, NULL, DELETE);
 	
 	// If the value was found, rename the dbTemp file to overwrite the existing DB
 	fclose(fDB);
-	if (byteReset != -1) {
+	if (dbSuccess != -1) {
 		// Set the temp file's name to the original file's name
 		remove(tbl);
 		if (rename(dbTemp, tbl)) {
@@ -519,7 +534,6 @@ int drop(const char* tbl, int whereCol, char* whereVal) {
 		
 		// Remove the temp file
 		remove(dbTemp);
-		dbSuccess = 1;
 	}
 	
 	free(dbTemp);
@@ -527,9 +541,14 @@ int drop(const char* tbl, int whereCol, char* whereVal) {
 	return dbSuccess;
 }
 
+// DEPRECATED (split into its constituent queries)
 int database(int cmdType, int col, const char* tbl, const char* setVal, int whereCol, const char* whereVal);
 
 // Facilitates the Insert command for a customer or seller
+// Parameters:
+//   
+// Return:
+//   int registerSuccess (0 on success, -1 or -2 on failure)
 int registerClient(char* registerData, int isCustomer) {
 	int registerSuccess = 0;
 	
@@ -583,6 +602,10 @@ int removeClient(int isCustomer) {
 }
 
 // Facilitates the Update command for a customer or seller
+// Parameters:
+//   
+// Return:
+//   int rowsAffected
 int updateClient(char* registerData, int isCustomer) {
 	int rowsAffected = 0;
 	
