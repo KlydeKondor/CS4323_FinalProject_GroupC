@@ -1,3 +1,4 @@
+0|Sample Data|0|0|100.00|
 1|Widget|4|90|2.00|
 2|Widget Spinner|4|40|15.00|
 3|Basketball|3|456|12.00|

@@ -163,6 +163,10 @@ void getTempName(char* dbTemp, const char* prefix, const char* tbl) {
 	}
 }
 
+void findMissing(FILE* fDB) {
+	
+}
+
 // Handles the Select query; returns a char* value which points to the row that is found
 char* findRow(FILE* fDB, int whereCol, const char* whereVal) {
 	// Buffer variables
@@ -239,26 +243,39 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, int whereCol, const char* w
 		// Store the current row in fullRow
 		strcpy(fullRow, getVal);
 		
-		// Initialize dbVal with the first column in getVal (need strcpy?)
+		// Initialize dbVal with the first column in getVal
 		strcpy(dbVal, strtok(getVal, separator));
 		
 		// Check each column
 		while (curCol <= whereCol && dbVal != NULL && dbVal[0] != '\n' && dbVal[0] != '|') {
 			// Check dbVal vs whereVal
-			if (curCol == whereCol && strcmp(dbVal, whereVal) == 0) {
-				// Record the length of the last row
-				foundLength = (strlen(fullRow) + 1) * sizeof(char);
-				
-				// Check the command
-				if (cmd == UPDATE) {
-					// If Update, place the new row
-					fputs(newRow, fNewDB);
-					fputc('\n', fNewDB);
+			if (curCol == whereCol) {
+				if (strcmp(dbVal, whereVal) == 0 || (cmd == INSERT && atoi(dbVal) != curRow)) {
+					// Record the length of the last row
+					foundLength = (strlen(fullRow) + 1) * sizeof(char);
+					
+					// Check the command
+					if (cmd == UPDATE) {
+						// If Update, place the new row
+						fputs(newRow, fNewDB);
+						fputc('\n', fNewDB);
+					}
+					else if (cmd == INSERT) {
+						// If Insert, place the new row and the old row
+						fprintf(fNewDB, "%d|", curRow);
+						fputs(newRow, fNewDB);
+						fputc('\n', fNewDB);
+						curRow++;
+						
+						// Place fullRow after
+						fputs(fullRow, fNewDB);
+						fputc('\n', fNewDB);
+					}
+					// If Delete, drop the record by omission
+					
+					// Skip placing the existing row
+					goto found;
 				}
-				// If Delete, drop the record by omission
-				
-				// Skip placing the existing row
-				goto found;
 			}
 			
 			// Get the current leftmost column using strtok
@@ -268,16 +285,24 @@ int findAndReplaceRow(FILE* fDB, const char* dbName, int whereCol, const char* w
 		
 		// Write the current row in the temp file
 		fputs(fullRow, fNewDB);
+		curRow++;
 		
 	found:	
 		// Get the next row
 		memset(getVal, 0, BUFF_SIZE); // Clear getVal
 		fgets(getVal, BUFF_SIZE, fDB); // Use fgets for the next row
-		curRow++; // Increment curRow
 		curCol = 0; // Reset curCol
 	}
 	
-	// If not found, return -1
+	// If not found, return -1 (unless INSERT, in which case insert at end)
+	if (foundLength < 0 && cmd == INSERT) {
+		// If Insert, place the new row (curRow is the new primary key)
+		fprintf(fNewDB, "%d|", curRow);
+		fputs(newRow, fNewDB);
+		fputc('\n', fNewDB);
+		foundLength = 1;
+	}
+	
 	free(fullRow);
 	free(dbVal);
 	fclose(fNewDB);
@@ -328,9 +353,61 @@ Record* select(const char* tbl, int whereCol, char* whereVal) {
 }
 
 // Inserts a row at the end of the file
-// TODO: Ensure unique key, place in sequential order
-//
+// Parameters:
+//   const char* tbl (the DB text file's name)
+//   char* setVal (the row to be inserted)
+// Return:
+//   int dbSuccess (0 on success, -1 or -2 on failure)
 int insert(const char* tbl, char* setVal) {
+	int dbSuccess = 0, byteReset = -1;
+	
+	// File pointer for the client's table
+	FILE* fDB;
+	
+	// A const char prefix for the DB's filename, and a pointer to the full temp name
+	char prefix[] = "temp_";
+	char* dbTemp;
+	
+	// Open in read-write mode (find existing record and update)
+	fDB = fopen(tbl, "r+");
+	
+	// Create the temp file's name on the heap, adding an extra char for null
+	dbTemp = (char*) malloc((strlen(prefix) + strlen(tbl) + 1) * sizeof(char));
+	
+	// Initialize dbTemp
+	getTempName(dbTemp, prefix, tbl);
+	
+	// Perform the update
+	byteReset = findAndReplaceRow(fDB, dbTemp, 0, "", setVal, INSERT);
+	
+	// If the value was found, rename the dbTemp file to overwrite the existing DB
+	fclose(fDB);
+	if (byteReset != -1) {
+		// Set the temp file's name to the original file's name
+		remove(tbl);
+		if (rename(dbTemp, tbl)) {
+			// Failure
+			printf("Couldn't rename\n");
+			dbSuccess = -2;
+		}
+	}
+	else {
+		// The whereVal was not found
+		printf("Not found\n");
+		
+		// Remove the temp file
+		remove(dbTemp);
+		dbSuccess = 1;
+	}
+	
+	free(dbTemp);
+			
+	return dbSuccess;
+}
+
+// Inserts a row at the end of the file
+// DEPRECATED: Does not generate primary key or ensure uniqueness
+int insert_old(const char* tbl, char* setVal) {
 	int dbSuccess = -1; // Failure
 	
 	// File pointer for the client's table
@@ -523,10 +600,11 @@ int updateClient(char* registerData, int isCustomer) {
 	return rowsAffected;
 }
 
-int addRemoveProduct() {
+int addRemoveProduct(struct productInfo* userProduct) {
 	int addRemoveSuccess = 0;
 	
 	// Insert or delete from productInformation
+	
 	
 	return addRemoveSuccess;
 }

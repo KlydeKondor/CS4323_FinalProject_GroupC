@@ -1,3 +1,4 @@
+0|0|0|123 Address Street|100.00|
 1|3|12|300 Linked List Parkway|144.00|
 1|4|1|300 Linked List Parkway|50.00|
 2|2|4|789 Address Way|60.00|

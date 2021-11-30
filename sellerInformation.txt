@@ -1,5 +1,6 @@
+0|Sample Data|123-456-7890|123 Address Street|
 1|Joe Smiff|234-456-7890|234 Address Lane|
-2|Bermp Backsweat|345-456-7890|345 Address Avenue|
-3|Barf Bungalow|456-456-7890|456 Address Boulevard|
+2|Bernie Batsmit|345-456-7890|345 Address Avenue|
+3|Bart Bungalow|456-456-7890|456 Address Boulevard|
 4|Edgar Allen Pwn|789-456-7890|789 Address Way|
 5|Linked List|1-888-NEW-TEST|400 Linked List Parkway|

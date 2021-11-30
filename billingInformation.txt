@@ -1,3 +1,4 @@
+0|0|Sample Data|100.00|
 1|5|300 Linked List Parkway|194.00|
 2|4|789 Address Way|60.00|
 3|2|345 Address Avenue|365.00|
