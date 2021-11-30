@@ -3,10 +3,14 @@
 // kyle.kentner@okstate.edu
 // Defining functions to handle database operations
 
+#include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "socketConnection.h"
+#include "util.h"
 
 #ifndef DATABASE_H
 #define DATABASE_H
@@ -154,6 +158,78 @@ char* getClientDB(char* productDesc, char* sellerID, int quantity, float price) 
 	
 	// resProduct should be freed outside this function
 	return resProduct;
+}
+
+// Written by Michael Som de Cerff
+static char* buildRecordsString(Record* records, int cols) {
+    assert(records != NULL);
+
+    char* stringBuilder = mallocString(BUFF_SIZE);
+
+    char getVal[BUFF_SIZE];
+    char* dbVal = (char*) malloc(BUFF_SIZE * sizeof(char)); // Char pointer for the current DB column
+    const char separator[2] = "|"; // Delimiter to be used in the strtok function
+
+    // Print while data is available
+    while (records != NULL && records->current != NULL) {
+        // Get the leftmost column
+        strcpy(getVal, records->current);
+        strcpy(dbVal, strtok(getVal, separator));
+
+        bool firstPrint = true;
+        int i = 0;
+        while (i < cols) {
+            unsigned long j = strlen(dbVal);
+
+            // Print the column
+            if (strcmp("\n", dbVal)) {
+                if(firstPrint == false) {
+                    strcat(stringBuilder, ", ");
+                }
+
+                firstPrint = false;
+                strcat(stringBuilder, dbVal);
+            }
+
+            // Try to get the next column
+            if (i < cols - 1) {
+                // Print delimiting spaces
+                while (j < 25) {
+                    //printf(" ");
+                    j++;
+                }
+
+                strcpy(dbVal, strtok(NULL, separator)); // Passing NULL so each column is removed from the buffer
+            }
+            i++;
+        }
+
+        // Free the data after printing
+        if (records->next == NULL) {
+            free(records->current);
+            free(records);
+            records = NULL;
+        }
+        else {
+            // Advance
+            records = records->next;
+
+            // Free the previous node
+            free(records->prev->current);
+            free(records->prev);
+            strcat(stringBuilder, "\n");
+        }
+    }
+
+    // Free the last record as needed
+    if (records != NULL) {
+        free(records);
+    }
+
+    // Free dbVal
+    free(dbVal);
+
+    return stringBuilder;
 }
 
 // Print out all results found
@@ -795,16 +871,26 @@ void viewProductsSeller(char* sellerID) {
 	headers->current = (char*) malloc(sizeof(char) * (strlen(hdrText) + 1));
 	headers->next = NULL;
 	strcpy((char*) (headers->current), hdrText);
-	
-	// Display headers (headers freed in printRecords)
-	printRecords(headers, 5);
-	
-	// Display records (records freed in printRecords)
-	printRecords(products, 5);
-	printf("\n");
+
+    char* stringBuilder = mallocString(MAX_TCP_BUFFER_SIZE);
+
+    // Display headers (headers freed in printRecords)
+    char* headersString = buildRecordsString(headers, 5);
+
+    // Display records (records freed in printRecords)
+    char* productsString = buildRecordsString(products, 5);
+
+    strcat(stringBuilder, headersString);
+    strcat(stringBuilder, "\n");
+    strcat(stringBuilder, productsString);
+
+    free(headersString);
+    free(productsString);
+
+    return stringBuilder;
 }
 
-void viewProductsBuyer(char* productID) {
+char* viewProductsBuyer(char* productID) {
 	// Select and display information for the buyer's desired product
 	Record* product = rselect("productInformation.txt", PRODUCT_ID_PK, productID);
 	
@@ -815,12 +901,22 @@ void viewProductsBuyer(char* productID) {
 	headers->next = NULL;
 	strcpy((char*) (headers->current), hdrText);
 	
-	// Display headers (headers freed in printRecords)
-	printRecords(headers, 5);
-	
-	// Display records (records freed in printRecords)
-	printRecords(product, 5);
-	printf("\n");
+    char* stringBuilder = mallocString(MAX_TCP_BUFFER_SIZE);
+
+    // Display headers (headers freed in printRecords)
+    char* headersString = buildRecordsString(headers, 5);
+
+    // Display records (records freed in printRecords)
+    char* productsString = buildRecordsString(products, 5);
+
+    strcat(stringBuilder, headersString);
+    strcat(stringBuilder, "\n");
+    strcat(stringBuilder, productsString);
+
+    free(headersString);
+    free(productsString);
+
+    return stringBuilder;
 }
 
 void extractColumn(Record* records, int extCol, Record* outRecords, int cols) {
@@ -882,10 +978,9 @@ void extractColumn(Record* records, int extCol, Record* outRecords, int cols) {
 
 Record* selectLoop(Record* searchRecords, const char* tbl, int searchCol) {
 	Record* outRecords = NULL;
-	
+
 	while (searchRecords != NULL && searchRecords->current != NULL) {
 		Record* curRecords = rselect(tbl, searchCol, (char*) (searchRecords->current));
-		
 		// Free the row's data
 		if (searchRecords->next == NULL || searchRecords->next->current == NULL) {
 			free(searchRecords->current);
@@ -895,12 +990,12 @@ Record* selectLoop(Record* searchRecords, const char* tbl, int searchCol) {
 		else {
 			// Advance
 			searchRecords = searchRecords->next;
-			
+
 			// Free the previous node
 			free(searchRecords->prev->current);
 			free(searchRecords->prev);
 		}
-		
+
 		// Accumulate records in outRecords
 		if (outRecords == NULL && curRecords != NULL) {
 			outRecords = (Record*) curRecords;
@@ -911,15 +1006,15 @@ Record* selectLoop(Record* searchRecords, const char* tbl, int searchCol) {
 			outRecords = outRecords->next;
 		}
 	}
-	
+
 	if (searchRecords != NULL) {
 		free(searchRecords);
 	}
-	
+
 	return outRecords;
 }
 
-void viewOrdersSeller(char* sellerID) {
+char* viewOrdersSeller(char* sellerID) {
 	// Select all products where this client is the seller
 	Record* products = rselect("productInformation.txt", SELLER_ID_FK, sellerID);
 	
@@ -938,16 +1033,26 @@ void viewOrdersSeller(char* sellerID) {
 	headers->current = (char*) malloc(sizeof(char) * (strlen(hdrText) + 1));
 	headers->next = NULL;
 	strcpy((char*) (headers->current), hdrText);
-	
+
+    char* stringBuilder = mallocString(MAX_TCP_BUFFER_SIZE);
+
 	// Display headers (headers freed in printRecords)
-	printRecords(headers, 5);
+	char* headersString = buildRecordsString(headers, 5);
 	
 	// Display records (records freed in printRecords)
-	printRecords(orders, 5);
-	printf("\n");
+	char* ordersString = buildRecordsString(orders, 5);
+
+    strcat(stringBuilder, headersString);
+    strcat(stringBuilder, "\n");
+    strcat(stringBuilder, ordersString);
+
+    free(headersString);
+    free(ordersString);
+
+    return stringBuilder;
 }
 
-void viewOrdersBuyer(char* buyerID) {
+char* viewOrdersBuyer(char* buyerID) {
 	// Select all billings where this client is the buyer
 	Record* billings = rselect("billingInformation.txt", BUYER_ID_FK, buyerID);
 	
@@ -966,32 +1071,51 @@ void viewOrdersBuyer(char* buyerID) {
 	headers->current = (char*) malloc(sizeof(char) * (strlen(hdrText) + 1));
 	headers->next = NULL;
 	strcpy((char*) (headers->current), hdrText);
-	
-	// Display headers (headers freed in printRecords)
-	printRecords(headers, 5);
-	
-	// Display records (records freed in printRecords)
-	printRecords(orders, 5);
-	printf("\n");
+
+    char* stringBuilder = mallocString(MAX_TCP_BUFFER_SIZE);
+
+    // Display headers (headers freed in printRecords)
+    char* headersString = buildRecordsString(headers, 5);
+
+    // Display records (records freed in printRecords)
+    char* ordersString = buildRecordsString(orders, 5);
+
+    strcat(stringBuilder, headersString);
+    strcat(stringBuilder, "\n");
+    strcat(stringBuilder, ordersString);
+
+    free(headersString);
+    free(ordersString);
+
+    return stringBuilder;
 }
 
-void viewBillingInfo(char* buyerID) {
+char* viewBillingInfo(char* buyerID) {
 	// Select and display all orders where this client is the buyer
 	Record* orders = rselect("billingInformation.txt", BUYER_ID_PK, buyerID);
-	
 	// Get column headers
 	char hdrText[] = "Order ID|Customer ID|Customer Address|Total Order Price|";
 	Record* headers = (Record*) malloc(sizeof(Record));
 	headers->current = (char*) malloc(sizeof(char) * (strlen(hdrText) + 1));
 	headers->next = NULL;
 	strcpy((char*) (headers->current), hdrText);
-	
-	// Display headers (headers freed in printRecords)
-	printRecords(headers, 4);
-	
-	// Display records (records freed in printRecords)
-	printRecords(orders, 4);
-	printf("\n");
+
+    char* stringBuilder = mallocString(MAX_TCP_BUFFER_SIZE);
+
+    // Display headers (headers freed in printRecords)
+    char* headersString = buildRecordsString(headers, 5);
+
+    // Display records (records freed in printRecords)
+    char* ordersString = buildRecordsString(orders, 5);
+
+    strcat(stringBuilder, headersString);
+    strcat(stringBuilder, "\n");
+    strcat(stringBuilder, ordersString);
+
+    free(headersString);
+    free(ordersString);
+
+    return stringBuilder;
 }
 
 #endif //DATABASE_H

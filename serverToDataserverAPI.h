@@ -6,10 +6,12 @@
 
 #define COMMAND_DELIMITER "$|$"
 #define COMMAND_SUCCESS "|SUCCESS|"
-#define COMMAND_FAIL "|FAILURE|"
+#define COMMAND_FAILURE "|FAILURE|"
 
-#define REGISTER_CLIENT "|REGISTER|"
-#define UPDATE_CLIENT "|UPDATE_INFO|"
+#define REGISTER_CUSTOMER "|REGISTER_CUSTOMER|"
+#define UPDATE_CUSTOMER "|UPDATE_CUSTOMER_INFO|"
+#define REGISTER_SELLER "|REGISTER_SELLER|"
+#define UPDATE_SELLER "|UPDATE_SELLER_INFO|"
 #define ADD_PRODUCT "|ADD_PRODUCT|"
 #define UPDATE_PRODUCT "|UPDATE_PRODUCT|"
 #define DELETE_PRODUCT "|DELETE_PRODUCT|"
@@ -23,8 +25,10 @@
 #define GET_BUY_ORDERS "|GET_BUY_ORDERS|"
 #define GET_BILLING_INFO "|GET_BILLING_INFO|"
 
-bool registerNewClient(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
-bool updateClientInfo(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
+bool registerNewCustomer(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
+bool updateCustomerInfo(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
+bool registerNewSeller(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
+bool updateSellerInfo(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
 bool addProduct(struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price);
 bool updateProduct(struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price);
 bool deleteProduct(struct socket_t* dataServerSocket, int productID);
