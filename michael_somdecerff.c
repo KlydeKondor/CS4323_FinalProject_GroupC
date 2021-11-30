@@ -134,7 +134,7 @@ bool updateProductQuantity(struct socket_t* dataServerSocket, int productID, int
 
     char message[MAX_TCP_BUFFER_SIZE];
     sprintf(message, "%s%s%d|%d|",
-            DELETE_PRODUCT,
+            UPDATE_PRODUCT_QUANTITY,
             COMMAND_DELIMITER,
             productID,
             quantity);
@@ -157,7 +157,7 @@ bool updateProductPrice(struct socket_t* dataServerSocket, int productID, float 
 
     char message[MAX_TCP_BUFFER_SIZE];
     sprintf(message, "%s%s%d|%f|",
-            DELETE_PRODUCT,
+            UPDATE_PRODUCT_PRICE,
             COMMAND_DELIMITER,
             productID,
             price);
@@ -182,7 +182,7 @@ bool updateBillingInfo(struct socket_t* dataServerSocket, int orderID, int clien
 
     char message[MAX_TCP_BUFFER_SIZE];
     sprintf(message, "%s%s%d|%d|%s|%f|",
-            DELETE_PRODUCT,
+            UPDATE_BILLING_INFO,
             COMMAND_DELIMITER,
             orderID,
             clientID,
@@ -210,7 +210,7 @@ bool addCustomerOrder(struct socket_t* dataServerSocket, int orderID, int produc
 
     char message[MAX_TCP_BUFFER_SIZE];
     sprintf(message, "%s%s%d|%d|%d|%s|%f|",
-            DELETE_PRODUCT,
+            ADD_ORDER,
             COMMAND_DELIMITER,
             orderID,
             productID,
@@ -235,7 +235,7 @@ char* getAllSellerProducts(struct socket_t* dataServerSocket, int clientID) {
 
     char message[MAX_TCP_BUFFER_SIZE];
     sprintf(message, "%s%s%d",
-            DELETE_PRODUCT,
+            GET_SELLER_PRODUCTS,
             COMMAND_DELIMITER,
             clientID);
 
@@ -254,7 +254,7 @@ char* getProductInfo(struct socket_t* dataServerSocket, int productID) {
 
     char message[MAX_TCP_BUFFER_SIZE];
     sprintf(message, "%s%s%d",
-            DELETE_PRODUCT,
+            GET_PRODUCT_INFO,
             COMMAND_DELIMITER,
             productID);
 
@@ -273,7 +273,7 @@ char* getAllSellerOrders(struct socket_t* dataServerSocket, int clientID) {
 
     char message[MAX_TCP_BUFFER_SIZE];
     sprintf(message, "%s%s%d",
-            DELETE_PRODUCT,
+            GET_SELLER_ORDERS,
             COMMAND_DELIMITER,
             clientID);
 
@@ -292,7 +292,7 @@ char* getAllBuyOrders(struct socket_t* dataServerSocket, int clientID) {
 
     char message[MAX_TCP_BUFFER_SIZE];
     sprintf(message, "%s%s%d",
-            DELETE_PRODUCT,
+            GET_BUY_ORDERS,
             COMMAND_DELIMITER,
             clientID);
 
@@ -311,7 +311,7 @@ char* getBillingInfo(struct socket_t* dataServerSocket, int clientID) {
 
     char message[MAX_TCP_BUFFER_SIZE];
     sprintf(message, "%s%s%d",
-            DELETE_PRODUCT,
+            GET_BILLING_INFO,
             COMMAND_DELIMITER,
             clientID);
 

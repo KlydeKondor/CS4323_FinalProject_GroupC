@@ -13,7 +13,59 @@ _Noreturn void* serverListenHandle(void* data) {
     while(1) {
         char buffer[MAX_TCP_BUFFER_SIZE];
         readSocket(clientServerSocket, buffer);
-		
+
+        int count;
+        char** split = str_split(buffer, COMMAND_DELIMITER, &count);
+
+        if(count < 2) {
+            writeSocket(clientServerSocket, COMMAND_FAIL);
+            continue;
+        }
+
+        char* command = split[0];
+
+        if(strcmp(command, REGISTER_CLIENT) == 0) {
+
+        }
+        else if(strcmp(command, UPDATE_CLIENT) == 0) {
+
+        }
+        else if(strcmp(command, ADD_PRODUCT) == 0) {
+
+        }
+        else if(strcmp(command, UPDATE_PRODUCT) == 0) {
+
+        }
+        else if(strcmp(command, DELETE_PRODUCT) == 0) {
+
+        }
+        else if(strcmp(command, UPDATE_PRODUCT_QUANTITY) == 0) {
+
+        }
+        else if(strcmp(command, UPDATE_PRODUCT_PRICE) == 0) {
+
+        }
+        else if(strcmp(command, UPDATE_BILLING_INFO) == 0) {
+
+        }
+        else if(strcmp(command, ADD_ORDER) == 0) {
+
+        }
+        else if(strcmp(command, GET_SELLER_PRODUCTS) == 0) {
+
+        }
+        else if(strcmp(command, GET_PRODUCT_INFO) == 0) {
+
+        }
+        else if(strcmp(command, GET_SELLER_ORDERS) == 0) {
+
+        }
+        else if(strcmp(command, GET_BUY_ORDERS) == 0) {
+
+        }
+        else if(strcmp(command, GET_BILLING_INFO) == 0) {
+
+        }
     }
 }
 
