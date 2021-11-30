@@ -42,22 +42,40 @@ static bool handleClient(char* command, struct socket_t* dataServerSocket, int c
     }
 }
 
-bool registerNewClient(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress) {
+bool registerNewCustomer(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress) {
     assert(dataServerSocket != NULL);
     assert(clientName != NULL);
     assert(clientNumber != NULL);
     assert(clientAddress != NULL);
 
-    return handleClient(REGISTER_CLIENT, dataServerSocket, clientID, clientName, clientNumber, clientAddress);
+    return handleClient(REGISTER_CUSTOMER, dataServerSocket, clientID, clientName, clientNumber, clientAddress);
 }
 
-bool updateClientInfo(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress) {
+bool updateCustomerInfo(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress) {
     assert(dataServerSocket != NULL);
     assert(clientName != NULL);
     assert(clientNumber != NULL);
     assert(clientAddress != NULL);
 
-    return handleClient(UPDATE_CLIENT, dataServerSocket, clientID, clientName, clientNumber, clientAddress);
+    return handleClient(UPDATE_CUSTOMER, dataServerSocket, clientID, clientName, clientNumber, clientAddress);
+}
+
+bool registerNewSeller(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress) {
+    assert(dataServerSocket != NULL);
+    assert(clientName != NULL);
+    assert(clientNumber != NULL);
+    assert(clientAddress != NULL);
+
+    return handleClient(REGISTER_SELLER, dataServerSocket, clientID, clientName, clientNumber, clientAddress);
+}
+
+bool updateSellerInfo(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress) {
+    assert(dataServerSocket != NULL);
+    assert(clientName != NULL);
+    assert(clientNumber != NULL);
+    assert(clientAddress != NULL);
+
+    return handleClient(UPDATE_SELLER, dataServerSocket, clientID, clientName, clientNumber, clientAddress);
 }
 
 static bool handleProduct(char* command, struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price) {

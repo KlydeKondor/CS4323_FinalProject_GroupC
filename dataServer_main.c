@@ -18,17 +18,47 @@ _Noreturn void* serverListenHandle(void* data) {
         char** split = str_split(buffer, COMMAND_DELIMITER, &count);
 
         if(count < 2) {
-            writeSocket(clientServerSocket, COMMAND_FAIL);
+            writeSocket(clientServerSocket, COMMAND_FAILURE);
             continue;
         }
 
         char* command = split[0];
 
-        if(strcmp(command, REGISTER_CLIENT) == 0) {
-
+        if(strcmp(command, REGISTER_CUSTOMER) == 0) {
+            int success = registerClient(split[1], 1);
+            if(success) {
+                writeSocket(clientServerSocket, COMMAND_SUCCESS);
+            }
+            else {
+                writeSocket(clientServerSocket, COMMAND_FAILURE);
+            }
         }
-        else if(strcmp(command, UPDATE_CLIENT) == 0) {
-
+        else if(strcmp(command, UPDATE_CUSTOMER) == 0) {
+            int success = updateClient(split[1], 1);
+            if(success) {
+                writeSocket(clientServerSocket, COMMAND_SUCCESS);
+            }
+            else {
+                writeSocket(clientServerSocket, COMMAND_FAILURE);
+            }
+        }
+        else if(strcmp(command, REGISTER_SELLER) == 0) {
+            int success = registerClient(split[1], 0);
+            if(success) {
+                writeSocket(clientServerSocket, COMMAND_SUCCESS);
+            }
+            else {
+                writeSocket(clientServerSocket, COMMAND_FAILURE);
+            }
+        }
+        else if(strcmp(command, UPDATE_SELLER) == 0) {
+            int success = updateClient(split[1], 0);
+            if(success) {
+                writeSocket(clientServerSocket, COMMAND_SUCCESS);
+            }
+            else {
+                writeSocket(clientServerSocket, COMMAND_FAILURE);
+            }
         }
         else if(strcmp(command, ADD_PRODUCT) == 0) {
 
