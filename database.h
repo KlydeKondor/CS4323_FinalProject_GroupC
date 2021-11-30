@@ -4,6 +4,7 @@
 // Defining functions to handle database operations
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -100,12 +101,18 @@ static char* buildRecordsString(Record* records, int cols) {
         strcpy(getVal, records->current);
         strcpy(dbVal, strtok(getVal, separator));
 
+        bool firstPrint = true;
         int i = 0;
         while (i < cols) {
             unsigned long j = strlen(dbVal);
 
             // Print the column
             if (strcmp("\n", dbVal)) {
+                if(firstPrint == false) {
+                    strcat(stringBuilder, ", ");
+                }
+
+                firstPrint = false;
                 strcat(stringBuilder, dbVal);
             }
 
@@ -113,7 +120,7 @@ static char* buildRecordsString(Record* records, int cols) {
             if (i < cols - 1) {
                 // Print delimiting spaces
                 while (j < 25) {
-                    printf(" ");
+                    //printf(" ");
                     j++;
                 }
 
@@ -749,6 +756,7 @@ char* viewProductsSeller(char* sellerID) {
     char* productsString = buildRecordsString(products, 5);
 
     strcat(stringBuilder, headersString);
+    strcat(stringBuilder, "\n");
     strcat(stringBuilder, productsString);
 
     free(headersString);
@@ -777,6 +785,7 @@ char* viewProductsBuyer(char* productID) {
     char* productsString = buildRecordsString(products, 5);
 
     strcat(stringBuilder, headersString);
+    strcat(stringBuilder, "\n");
     strcat(stringBuilder, productsString);
 
     free(headersString);
@@ -910,6 +919,7 @@ char* viewOrdersSeller(char* sellerID) {
 	char* ordersString = buildRecordsString(orders, 5);
 
     strcat(stringBuilder, headersString);
+    strcat(stringBuilder, "\n");
     strcat(stringBuilder, ordersString);
 
     free(headersString);
@@ -947,6 +957,7 @@ char* viewOrdersBuyer(char* buyerID) {
     char* ordersString = buildRecordsString(orders, 5);
 
     strcat(stringBuilder, headersString);
+    strcat(stringBuilder, "\n");
     strcat(stringBuilder, ordersString);
 
     free(headersString);
@@ -958,7 +969,7 @@ char* viewOrdersBuyer(char* buyerID) {
 char* viewBillingInfo(char* buyerID) {
 	// Select and display all orders where this client is the buyer
 	Record* orders = select("billingInformation.txt", BUYER_ID_PK, buyerID);
-	
+
 	// Get column headers
 	char hdrText[] = "Order ID|Customer ID|Customer Address|Total Order Price|";
 	Record* headers = (Record*) malloc(sizeof(Record));
@@ -975,6 +986,7 @@ char* viewBillingInfo(char* buyerID) {
     char* ordersString = buildRecordsString(orders, 5);
 
     strcat(stringBuilder, headersString);
+    strcat(stringBuilder, "\n");
     strcat(stringBuilder, ordersString);
 
     free(headersString);
