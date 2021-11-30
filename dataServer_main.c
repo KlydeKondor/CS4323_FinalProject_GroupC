@@ -82,19 +82,29 @@ _Noreturn void* serverListenHandle(void* data) {
 
         }
         else if(strcmp(command, GET_SELLER_PRODUCTS) == 0) {
-
+            char* info = viewProductsSeller(split[1]);
+            writeSocket(clientServerSocket, info);
+            free(info);
         }
         else if(strcmp(command, GET_PRODUCT_INFO) == 0) {
-
+            char* info = viewProductsBuyer(split[1]);
+            writeSocket(clientServerSocket, info);
+            free(info);
         }
         else if(strcmp(command, GET_SELLER_ORDERS) == 0) {
-
+            char* info = viewOrdersSeller(split[1]);
+            writeSocket(clientServerSocket, info);
+            free(info);
         }
         else if(strcmp(command, GET_BUY_ORDERS) == 0) {
-
+            char* info = viewOrdersBuyer(split[1]);
+            writeSocket(clientServerSocket, info);
+            free(info);
         }
         else if(strcmp(command, GET_BILLING_INFO) == 0) {
-
+            char* info = viewBillingInfo(split[1]);
+            writeSocket(clientServerSocket, info);
+            free(info);
         }
     }
 }

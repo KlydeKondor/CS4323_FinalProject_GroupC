@@ -110,7 +110,7 @@ bool addProduct(struct socket_t* dataServerSocket, int productID, char* productD
     assert(quantity > 0);
     assert(price > 0);
 
-    handleProduct(ADD_PRODUCT, dataServerSocket, productID, productDescription, sellerID, quantity, price);
+    return handleProduct(ADD_PRODUCT, dataServerSocket, productID, productDescription, sellerID, quantity, price);
 }
 
 bool updateProduct(struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price) {
@@ -121,7 +121,7 @@ bool updateProduct(struct socket_t* dataServerSocket, int productID, char* produ
     assert(quantity > 0);
     assert(price > 0);
 
-    handleProduct(UPDATE_PRODUCT, dataServerSocket, productID, productDescription, sellerID, quantity, price);
+    return handleProduct(UPDATE_PRODUCT, dataServerSocket, productID, productDescription, sellerID, quantity, price);
 }
 
 bool deleteProduct(struct socket_t* dataServerSocket, int productID) {
