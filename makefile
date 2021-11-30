@@ -6,5 +6,11 @@ server:
 client:
 	gcc -o client.out client_main.c michael_somdecerff.c -lpthread -lrt -std=c11
 
+raceConditionBroken:
+	gcc -o raceConditionBroken.out GROUPC_1/RaceConditions_Main.c -lpthread -lrt -std=c11
+
+raceConditionFixed:
+	gcc -o raceConditionFixed.out GROUPC_2/RaceConditions_Main.c -lpthread -lrt -std=c11
+
 clean:
 	rm *.out
