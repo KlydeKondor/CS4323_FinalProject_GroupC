@@ -26,7 +26,7 @@ _Noreturn void* serverListenHandle(void* data) {
 
         if(strcmp(command, REGISTER_CUSTOMER) == 0) {
             int success = registerClient(split[1], 1);
-            if(success) {
+            if(success == 0) {
                 writeSocket(clientServerSocket, COMMAND_SUCCESS);
             }
             else {
@@ -35,7 +35,7 @@ _Noreturn void* serverListenHandle(void* data) {
         }
         else if(strcmp(command, UPDATE_CUSTOMER) == 0) {
             int success = updateClient(split[1], 1);
-            if(success) {
+            if(success == 0) {
                 writeSocket(clientServerSocket, COMMAND_SUCCESS);
             }
             else {
@@ -44,7 +44,7 @@ _Noreturn void* serverListenHandle(void* data) {
         }
         else if(strcmp(command, REGISTER_SELLER) == 0) {
             int success = registerClient(split[1], 0);
-            if(success) {
+            if(success == 0) {
                 writeSocket(clientServerSocket, COMMAND_SUCCESS);
             }
             else {
@@ -53,7 +53,7 @@ _Noreturn void* serverListenHandle(void* data) {
         }
         else if(strcmp(command, UPDATE_SELLER) == 0) {
             int success = updateClient(split[1], 0);
-            if(success) {
+            if(success == 0) {
                 writeSocket(clientServerSocket, COMMAND_SUCCESS);
             }
             else {
