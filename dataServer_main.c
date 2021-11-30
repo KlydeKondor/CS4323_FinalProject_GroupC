@@ -121,13 +121,6 @@ int main() {
     bindSocket(dataServerSocket);
     listenSocket(dataServerSocket, 3);
 	
-	// Kyle's test cases (location is temporary)
-	char dummyData[] = "5|Jane Doe|555-867-5309|123 Address Road|";
-	registerClient(dummyData, 1); // INSERT
-	
-	char dummyUpdate[] = "5|tesT|Dadt|Foo|";
-	updateClient(dummyUpdate, 1); // UPDATE
-	
     while(1) {
         // Accept incoming server connection and pass it off to a thread
         struct socket_t* acceptedSocket = acceptSocket(dataServerSocket);
