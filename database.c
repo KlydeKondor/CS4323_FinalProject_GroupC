@@ -22,7 +22,7 @@ int main() {
 	
 	// Select the dummy rows
 	printf("SELECT TEST...\n");
-	selectClient(1);
+	//selectClient(1);
 	
 	// Delete the dummy row (comment out to verify that the row is being added/updated)
 	printf("DELETE TEST...\n");

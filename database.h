@@ -93,7 +93,7 @@ char* getProductDB(char* productID, char* productDesc, int sellerID, int quantit
 	sprintf(newProduct, "%s%s|%d|%d|%f|", productID, productDesc, sellerID, quantity, price);
 	
 	// malloc a string and copy the buffer's contents into it
-	printf("%d\n", strlen(newProduct));
+	printf("%d\n", (int) strlen(newProduct));
 	char* resProduct = (char*) malloc(sizeof(char) * 2 * strlen(newProduct) + 2);
 	strcpy(resProduct, newProduct);
 	printf("Why\n");
@@ -861,7 +861,7 @@ Record* purchaseReturnProduct(char* productID, char* customerID, char* orderID, 
 	return purchaseReturns;
 }
 
-void viewProductsSeller(char* sellerID) {
+char* viewProductsSeller(char* sellerID) {
 	// Select and display all products where this client is the seller
 	Record* products = rselect("productInformation.txt", SELLER_ID_FK, sellerID);
 	
@@ -907,7 +907,7 @@ char* viewProductsBuyer(char* productID) {
     char* headersString = buildRecordsString(headers, 5);
 
     // Display records (records freed in printRecords)
-    char* productsString = buildRecordsString(products, 5);
+    char* productsString = buildRecordsString(product, 5);
 
     strcat(stringBuilder, headersString);
     strcat(stringBuilder, "\n");

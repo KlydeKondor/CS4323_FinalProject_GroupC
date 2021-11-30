@@ -102,7 +102,7 @@ static bool handleProduct(char* command, struct socket_t* dataServerSocket, int 
     }
 }
 
-bool addProduct(struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price) {
+bool addNewProduct(struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price) {
     assert(dataServerSocket != NULL);
     assert(productID > 0);
     assert(productDescription != NULL);

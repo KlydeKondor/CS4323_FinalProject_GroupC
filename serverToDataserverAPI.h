@@ -29,7 +29,7 @@ bool registerNewCustomer(struct socket_t* dataServerSocket, int clientID, char* 
 bool updateCustomerInfo(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
 bool registerNewSeller(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
 bool updateSellerInfo(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
-bool addProduct(struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price);
+bool addNewProduct(struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price);
 bool updateProduct(struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price);
 bool deleteProduct(struct socket_t* dataServerSocket, int productID);
 bool updateProductQuantity(struct socket_t* dataServerSocket, int productID, int quantity);
