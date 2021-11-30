@@ -61,25 +61,25 @@ _Noreturn void* serverListenHandle(void* data) {
             }
         }
         else if(strcmp(command, ADD_PRODUCT) == 0) {
-
+            writeSocket(clientServerSocket, COMMAND_FAILURE);
         }
         else if(strcmp(command, UPDATE_PRODUCT) == 0) {
-
+            writeSocket(clientServerSocket, COMMAND_FAILURE);
         }
         else if(strcmp(command, DELETE_PRODUCT) == 0) {
-
+            writeSocket(clientServerSocket, COMMAND_FAILURE);
         }
         else if(strcmp(command, UPDATE_PRODUCT_QUANTITY) == 0) {
-
+            writeSocket(clientServerSocket, COMMAND_FAILURE);
         }
         else if(strcmp(command, UPDATE_PRODUCT_PRICE) == 0) {
-
+            writeSocket(clientServerSocket, COMMAND_FAILURE);
         }
         else if(strcmp(command, UPDATE_BILLING_INFO) == 0) {
-
+            writeSocket(clientServerSocket, COMMAND_FAILURE);
         }
         else if(strcmp(command, ADD_ORDER) == 0) {
-
+            writeSocket(clientServerSocket, COMMAND_FAILURE);
         }
         else if(strcmp(command, GET_SELLER_PRODUCTS) == 0) {
             char* info = viewProductsSeller(split[1]);
@@ -106,6 +106,11 @@ _Noreturn void* serverListenHandle(void* data) {
             writeSocket(clientServerSocket, info);
             free(info);
         }
+
+        for(int i = 0; i < count; i++) {
+            free(split[i]);
+        }
+        free(split);
     }
 }
 
