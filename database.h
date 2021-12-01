@@ -337,7 +337,7 @@ char* findRow(FILE* fDB, int whereCol, const char* whereVal) {
 		// Check each column
 		while (curCol <= whereCol && dbVal != NULL && dbVal[0] != '\n' && dbVal[0] != '|') {
 			// Check dbVal vs whereVal
-			if (curCol == whereCol && strcmp(dbVal, whereVal) == 0 || strcmp("ALL", whereVal)) {
+			if (curCol == whereCol && strcmp(dbVal, whereVal) == 0 || strcmp("ALL", whereVal) == 0) {
 				// Quit searching
 				goto found;
 			}
