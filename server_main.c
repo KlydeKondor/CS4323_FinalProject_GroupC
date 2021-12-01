@@ -29,6 +29,8 @@ void* clientToDataServerHandle(void* data) {
         char buffer[MAX_TCP_BUFFER_SIZE - 64];
         readSocket(clientSocket, buffer);
 
+        printf("Read client traffic: %s\n", buffer);
+
         if(strcmp(buffer, QUIT) == 0) {
             break;
         }
@@ -53,6 +55,8 @@ _Noreturn void* DataServerToClientHandle(void* data) {
         char buffer[MAX_TCP_BUFFER_SIZE];
         readSocket(dataServerSocket, buffer);
 
+        printf("Read data server traffic: %s\n", buffer);
+
         int count;
         char** split = str_split(buffer, COMMAND_DELIMITER, &count);
 
@@ -60,22 +64,15 @@ _Noreturn void* DataServerToClientHandle(void* data) {
         writeSocket(clientSockets[routingID], split[RETURN_DATA_INDEX]);
     }
 }
-
-_Noreturn int main(int argc, char **argv) {
+int main(int argc, char **argv) {
     seedRand();
     // Parse server port
-    if(argc < 1) {
+    if(argc < 2) {
         printf("Port argument missing\nUsage: ./server.out <port>\n");
         exit(1);
     }
-    long port;
-    char* other;
-    if((port = strtol(argv[0], &other, 10)) == 0) {
-        if(port > (1 << 16)) { //Max port: 65536
-            printf("Port outside of valid range 0 < port < 65536\n");
-            exit(1);
-        }
-    }
+
+    int port = atoi(argv[1]);
 
     // Connect to the data server
     struct socket_t* dataServerSocket = mallocSocket(DATA_SERVER_ADDRESS, DATA_SERVER_PORT);

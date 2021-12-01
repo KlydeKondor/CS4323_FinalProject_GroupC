@@ -315,5 +315,5 @@ void getAllProductInformation(struct socket_t* serverSocket) {
     writeSocket(serverSocket, GET_ALL_PRODUCTS);
     char buffer[MAX_TCP_BUFFER_SIZE];
     readSocket(serverSocket, buffer);
-    printf("%s", buffer);
+    printf("All Products:\n%s\n", buffer);
 }

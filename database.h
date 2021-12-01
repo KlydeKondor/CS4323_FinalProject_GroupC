@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "michael_somdecerff.c"
 //#include "socketConnection.h"
 //#include "util.h"
 
@@ -801,7 +800,7 @@ int updateQuantity(char* prodInfo) {
 	// Split on the pipe character
 	const char separator[2] = "|"; // Delimiter to be used in the strtok function
 	strcpy(productID, strtok(buffer, "|"));
-	strcpy(strChange, strtok(NULL, "|");
+	strcpy(strChange, strtok(NULL, "|"));
 	
 	change = atoi(strChange);
 	free(strChange);
