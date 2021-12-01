@@ -43,7 +43,10 @@ _Noreturn void* serverListenHandle(void* data) {
 
         char* routingID = split[ROUTING_ID_INDEX];
         char* command = split[COMMAND_INDEX];
-        char* packetData = split[DATA_INDEX];
+        char* packetData = "";
+        if(count > 2) {
+            packetData = split[DATA_INDEX];
+        }
 
         if(strcmp(command, REGISTER_CUSTOMER) == 0) {
             int success = registerClient(packetData, 1);
@@ -133,6 +136,11 @@ _Noreturn void* serverListenHandle(void* data) {
             char* info = viewProductsSeller(packetData);
             writeSocket(clientServerSocket, info);
             free(info);
+        }
+        else if(strcmp(command, GET_ALL_PRODUCTS) == 0) {
+            //char* info = getAllProducts();
+            //writeOther(clientServerSocket, routingID, info);
+            //free(info);
         }
         else if(strcmp(command, GET_PRODUCT_INFO) == 0) {
             char* info = viewProductsBuyer(packetData);

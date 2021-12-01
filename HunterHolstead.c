@@ -1,6 +1,7 @@
 //Client.c
 //Hunter Holstead
 
+#include <assert.h>
 #include <stdio.h>
 #include "HunterHolstead.h"
 #include "socketConnection.h"
@@ -13,8 +14,7 @@ Seller’s Contact Address)
 • Contact Number: 10-digits contact number of the seller in the form XXX-XXX-XXXX,  
 • Seller’s Contact Address: contact address of the seller */
 void setSellerInformation()
-{ 
-
+{
 	struct sellerInformation SI; 
 
 	//They don't set SellerID it must be sequential
@@ -168,13 +168,13 @@ _Noreturn void RunClient(struct socket_t* serverSocket)
 		{
 			printf("%s\n", "Please enter your User ID:");
 			scanf("%d", &ID);
-			runSellerClient(ID);
+			runSellerClient(ID, serverSocket);
 		}
 		else if(clientType == 1)
 		{
 			printf("%s\n", "Please enter your User ID:");
 			scanf("%d", &ID);
-			runBuyerClient(ID);
+			runBuyerClient(ID, serverSocket);
 		}
 		else
 		{
@@ -183,12 +183,12 @@ _Noreturn void RunClient(struct socket_t* serverSocket)
 	}
 }
 
-void runBuyerClient(int ID)
+void runBuyerClient(int ID, struct socket_t* serverSocket)
 {
 	int input;
 	int loop = 1;
-	//int inputID = ID;
-	char* delimiter = "$|$";
+
+    getAllProductInformation(serverSocket);
 	
 	while(loop == 1)
 	{
@@ -196,7 +196,7 @@ void runBuyerClient(int ID)
 		
 		char buffer[MAX_TCP_BUFFER_SIZE];
 		char* command = GET_PRODUCT_INFO;
-		sprintf(buffer, "%s%s%d", command, delimiter, ID);
+		sprintf(buffer, "%s%s%d", command, COMMAND_DELIMITER, ID);
 		//printf("%s\n", buffer);
 		
 		
@@ -237,7 +237,7 @@ void runBuyerClient(int ID)
 	}
 }
 
-void runSellerClient(int ID)
+void runSellerClient(int ID, struct socket_t* serverSocket)
 {
 	int input;
 	int loop = 1;
@@ -316,4 +316,14 @@ void registerClient()
 			printf("%s\n", "You did not enter a correct response");
 		}
 	}
+}
+
+void getAllProductInformation(struct socket_t* serverSocket) {
+    assert(serverSocket != NULL);
+
+    // Get all product information
+    writeSocket(serverSocket, GET_ALL_PRODUCTS);
+    char buffer[MAX_TCP_BUFFER_SIZE];
+    readSocket(serverSocket, buffer);
+    printf("%s", buffer);
 }

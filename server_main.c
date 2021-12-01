@@ -32,6 +32,11 @@ _Noreturn void* clientToDataServerHandle(void* data) {
         sprintf(message, "%d%s%s", routingID, COMMAND_DELIMITER, buffer);
         writeSocket(dataServerSocket, message);
     }
+
+    free(unpackedData[CLIENT_SOCKET_ID]);
+    freeSocket(unpackedData[CLIENT_SOCKET]);
+    freeSocket(unpackedData[SERVER_SOCKET]);
+    free(data);
 }
 
 _Noreturn void* DataServerToClientHandle(void* data) {
@@ -49,24 +54,7 @@ _Noreturn void* DataServerToClientHandle(void* data) {
     }
 }
 
-void* threadSpawnHandle(void* data) {
-    pthread_t clientToDataServerThread;
-
-    pthread_create(&clientToDataServerThread, NULL, clientToDataServerHandle, data);
-    pthread_join(clientToDataServerThread, NULL);
-
-    void** unpackedData = (void**)data;
-    struct socket_t* clientSocket = (struct socket_t*) unpackedData[CLIENT_SOCKET];
-    struct socket_t* serverSocket = (struct socket_t*) unpackedData[SERVER_SOCKET];
-    free(unpackedData[0]);
-    freeSocket(clientSocket);
-    freeSocket(serverSocket);
-    free(data);
-
-    return NULL;
-}
-
-int main(int argc, char **argv) {
+_Noreturn int main(int argc, char **argv) {
     seedRand();
     // Parse server port
     if(argc < 1) {
@@ -108,6 +96,6 @@ int main(int argc, char **argv) {
         packedData[SERVER_SOCKET] = dataServerSocket;
 
         pthread_t clientServerThread;
-        pthread_create(&clientServerThread, NULL, threadSpawnHandle, packedData);
+        pthread_create(&clientServerThread, NULL, clientToDataServerHandle, packedData);
     }
 }
