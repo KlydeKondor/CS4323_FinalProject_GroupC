@@ -338,7 +338,7 @@ char* findRow(FILE* fDB, int whereCol, const char* whereVal) {
 		// Check each column
 		while (curCol <= whereCol && dbVal != NULL && dbVal[0] != '\n' && dbVal[0] != '|') {
 			// Check dbVal vs whereVal
-			if (curCol == whereCol && strcmp(dbVal, whereVal) == 0) {
+			if (curCol == whereCol && strcmp(dbVal, whereVal) == 0 || strcmp("ALL", whereVal)) {
 				// Quit searching
 				goto found;
 			}
@@ -801,7 +801,7 @@ int updateQuantity(char* prodInfo) {
 	// Split on the pipe character
 	const char separator[2] = "|"; // Delimiter to be used in the strtok function
 	strcpy(productID, strtok(buffer, "|"));
-	strcpy(strChange, strtok(NULL, "|");
+	strcpy(strChange, strtok(NULL, "|"));
 	
 	change = atoi(strChange);
 	free(strChange);
@@ -974,30 +974,14 @@ char* viewProductsBuyer(char* productID) {
     return stringBuilder;
 }
 
-char* viewAllProductsBuyer() {
-	// Select and display information for all available products
-	FILE* fDB = fopen("productInformation.txt", "r");
-	
-	// Buffers
+char* viewAllProducts() {
+	// Buffer for the current DB row
 	char getVal[BUFF_SIZE];
-	Record* products = (Record*) malloc(sizeof(Record));
-	Record* head = products;
+	char* dbVal = (char*) malloc(BUFF_SIZE * sizeof(char)); // Char pointer for the current DB column
+	const char separator[2] = "|"; // Delimiter to be used in the strtok function
 	
-	// Initialize getVal with the first row
-	fgets(getVal, BUFF_SIZE, fDB);
-	
-	// Check each row
-	while (getVal[0] != '\0') {
-		// Store the current row
-		products->current = (char*) malloc(sizeof(char) * strlen(getVal));
-		strcpy(((char*) products->current), getVal);
-		
-		// Move to the next product row
-		products->next = (Record*) malloc(sizeof(Record));
-		products->next->prev = products;
-		products = products->next;
-		fgets(getVal, BUFF_SIZE, fDB);
-	}
+	// Select all products where this client is the seller
+	Record* products = rselect("productInformation.txt", 0, "ALL");
 	
 	// Convert to a string
 	char* productsString = buildRecordsString(products, 5);

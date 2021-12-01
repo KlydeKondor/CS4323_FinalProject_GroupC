@@ -8,6 +8,11 @@
 
 int main() {
 	// First four operations in PDF
+	printf("VIEW ALL...\n");
+	char* allProducts = viewAllProducts();
+	printf("%s\n", allProducts);
+	free(allProducts);
+	
 	printf("INSERT TEST...\n");
 	char dummyData[] = "5|Jane Doe|555-867-5309|123 Address Road|";
 	registerClient(dummyData, 1);
