@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "dataServerNetwork.h"
 #include "serverNetwork.h"
 #include "serverToDataserverAPI.h"
@@ -18,7 +19,7 @@
 static int nextRoutingID = 0;
 static struct socket_t* clientSockets[50];
 
-_Noreturn void* clientToDataServerHandle(void* data) {
+void* clientToDataServerHandle(void* data) {
     void** unpackedData = (void**)data;
     int routingID = *(int*) unpackedData[CLIENT_SOCKET_ID];
     struct socket_t* clientSocket = (struct socket_t*) unpackedData[CLIENT_SOCKET];
@@ -27,6 +28,10 @@ _Noreturn void* clientToDataServerHandle(void* data) {
     while(1) {
         char buffer[MAX_TCP_BUFFER_SIZE - 64];
         readSocket(clientSocket, buffer);
+
+        if(strcmp(buffer, QUIT) == 0) {
+            break;
+        }
 
         char message[MAX_TCP_BUFFER_SIZE];
         sprintf(message, "%d%s%s", routingID, COMMAND_DELIMITER, buffer);
@@ -37,6 +42,8 @@ _Noreturn void* clientToDataServerHandle(void* data) {
     freeSocket(unpackedData[CLIENT_SOCKET]);
     freeSocket(unpackedData[SERVER_SOCKET]);
     free(data);
+
+    return NULL;
 }
 
 _Noreturn void* DataServerToClientHandle(void* data) {
