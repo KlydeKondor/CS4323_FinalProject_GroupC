@@ -1,13 +1,11 @@
 all: dataServer server client
+evenMoreAll: all raceConditionBroken raceConditionFixed deadlockBroken deadlockFixed
 dataServer:
 	gcc -o dataServer.out dataServer_main.c michael_somdecerff.c -lpthread -lrt -std=c11
 server:
 	gcc -o server.out server_main.c michael_somdecerff.c -lpthread -lrt -std=c11
 client:
 	gcc -o client.out client_main.c michael_somdecerff.c HunterHolstead.c -lpthread -lrt -std=c11
-
-databaseTest:
-	gcc -o databaseTest.out database.c michael_somdecerff.c -lpthread -lrt -std=c11
 
 raceConditionBroken:
 	gcc -o raceConditionBroken.out GROUPC_1/RaceConditions_Main.c -lpthread -lrt -std=c11

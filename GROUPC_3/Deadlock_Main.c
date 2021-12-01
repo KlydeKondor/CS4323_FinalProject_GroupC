@@ -5,7 +5,7 @@
 pthread_mutex_t lockA = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t lockB = PTHREAD_MUTEX_INITIALIZER;
 
-_Nonnull void* threadA(void* data) {
+void* threadA(void* data) {
     while (1) {
         pthread_mutex_lock(&lockA);
         sleep(1); // Gives time for the other thread to acquire the other lock
@@ -17,7 +17,7 @@ _Nonnull void* threadA(void* data) {
     }
 }
 
-_Nonnull void* threadB(void* data) {
+void* threadB(void* data) {
     while (1) {
         pthread_mutex_lock(&lockB);
         sleep(1); // Gives time for the other thread to acquire the other lock
