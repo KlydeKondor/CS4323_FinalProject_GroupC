@@ -9,8 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "socketConnection.h"
-#include "util.h"
+#include "michael_somdecerff.c"
+//#include "socketConnection.h"
+//#include "util.h"
 
 #ifndef DATABASE_H
 #define DATABASE_H
@@ -93,10 +94,8 @@ char* getProductDB(char* productID, char* productDesc, int sellerID, int quantit
 	sprintf(newProduct, "%s%s|%d|%d|%f|", productID, productDesc, sellerID, quantity, price);
 	
 	// malloc a string and copy the buffer's contents into it
-	printf("%d\n", (int) strlen(newProduct));
 	char* resProduct = (char*) malloc(sizeof(char) * 2 * strlen(newProduct) + 2);
 	strcpy(resProduct, newProduct);
-	printf("Why\n");
 	
 	// resProduct should be freed outside this function
 	return resProduct;
@@ -314,10 +313,6 @@ void getTempName(char* dbTemp, const char* prefix, const char* tbl) {
 	}
 }
 
-void findMissing(FILE* fDB) {
-	
-}
-
 // Handles the Select query; returns a char* value which points to the row that is found
 char* findRow(FILE* fDB, int whereCol, const char* whereVal) {
 	// Buffer variables
@@ -333,7 +328,7 @@ char* findRow(FILE* fDB, int whereCol, const char* whereVal) {
 	fgets(getVal, BUFF_SIZE, fDB);
 	
 	// Check each row while getVal is not null and the full row was read (i.e. quit at EOF)
-	while (getVal[0] != '\0' && strlen(getVal) > 2 && getVal[strlen(getVal) - 2] == '|') {
+	while (getVal[0] != '\0' && strlen(getVal) > 2) { // && getVal[strlen(getVal) - 2] == '|') {
 		// Store the current row in fullRow
 		strcpy(fullRow, getVal);
 		
@@ -482,13 +477,13 @@ Record* rselect(const char* tbl, int whereCol, char* whereVal) {
 	char prefix[] = "temp_";
 	char* dbTemp;
 	
-	 // Open in read-only mode
+	// Open in read-only mode
 	fDB = fopen(tbl, "r");
 	
 	// Select the row
 	char* retVal;
 	
-	do {		
+	do {
 		retVal = findRow(fDB, whereCol, whereVal);
 
 		// Store the pointer to the DB record in the node's data (may be NULL)
@@ -504,6 +499,11 @@ Record* rselect(const char* tbl, int whereCol, char* whereVal) {
 	} while (retVal != NULL && retVal[0] != '\0');
 	
 	fclose(fDB);
+	
+	// Check if no nodes were added
+	if (resList == head && resList->current == NULL) {
+		return NULL;
+	}
 	
 	return head;
 }
@@ -772,12 +772,12 @@ int updateClient(char* registerData, int isCustomer) {
 	return rowsAffected;
 }
 
-int addProduct(char* productInfo) {
+int addProduct(char* prodInfo) {
 	int addSuccess = 0;
 	
 	// Insert into productInformation
 	//char* newProduct = getProductDB("", productDesc, atoi(sellerID), quantity, price);
-	//addSuccess = insert("productInformation.txt", newProduct);
+	addSuccess = insert("productInformation.txt", prodInfo);
 	//free(newProduct);
 	
 	return addSuccess;
@@ -788,13 +788,24 @@ int removeProduct(char* productID) {
 	return drop("productInformation.txt", 0, productID);
 }
 
-int updateQuantity(char* productInfo) {
+int updateQuantity(char* prodInfo) {
+	char buffer[BUFF_SIZE];
+	strcpy(buffer, prodInfo);
 	int updateSuccess = 0;
 
-    // PARSE HERE
-    char* productID;
-    int change;
-
+    // For parsing prodInfo
+    char* productID = (char*) malloc(sizeof(char) * strlen(prodInfo));
+    char* strChange = (char*) malloc(sizeof(char) * strlen(prodInfo));
+	int change;
+	
+	// Split on the pipe character
+	const char separator[2] = "|"; // Delimiter to be used in the strtok function
+	strcpy(productID, strtok(buffer, "|"));
+	strcpy(strChange, strtok(NULL, "|");
+	
+	change = atoi(strChange);
+	free(strChange);
+	
 	// Select the productID from the DB to get the current quantity
 	Record* updateProduct = rselect("productInformation.txt", PRODUCT_ID_PK, productID);
 	
@@ -802,24 +813,18 @@ int updateQuantity(char* productInfo) {
 		// Retrieve the struct values and update quantity
 		struct productInfo* dbProduct = getProductStruct(updateProduct->current);
 		dbProduct->quantityAvailable += change;
-		printf("Burmple\n");
 		if (dbProduct->quantityAvailable < 0) {
 			// Validation failed (negative quantity)
-			printf("HI\n");
 			updateSuccess = -2;
 		}
 		else {
 			// Add a delimiter to the end of productID
-			char id[BUFF_SIZE];
+			char id[BUFF_SIZE + 1];
 			sprintf(id, "%s|", productID);
-			printf("Burmple\n");
-			printf("ID: %s\n", id);
 			
 			// Get a string represenation of the record with the new quantity
 			char* newRow = getProductDB(id, dbProduct->productDesc, dbProduct->sellerID,
 				dbProduct->quantityAvailable, dbProduct->unitPrice);
-			
-			printf("NEW ROW: %s\n", newRow);
 			
 			// Update the quantity of the product in productInformation
 			update("productInformation.txt", newRow, PRODUCT_ID_PK, productID);
@@ -836,17 +841,62 @@ int updateQuantity(char* productInfo) {
 		// Failure
 		updateSuccess = -1;
 	}
-		
+	
+	free(productID);
+	
 	return updateSuccess;
 }
 
-int updatePrice(char* productInfo) {
+int updatePrice(char* prodInfo) {
 	int updateSuccess = 0;
 	
-	// Update the quantity or price of a product in productInformation
-    char* productID;
-    float newPrice;
+	// For parsing prodInfo
+    char productID[BUFF_SIZE];
+    char strPrice[BUFF_SIZE];
+	float newPrice;
 	
+	// Split on the pipe character
+	const char separator[2] = "|"; // Delimiter to be used in the strtok function
+	strcpy(productID, strtok(prodInfo, "|"));
+	strcpy(strPrice, strtok(prodInfo, "|"));
+	newPrice = atof(strPrice);
+	
+	// Select the productID from the DB to get the current quantity
+	Record* updateProduct = rselect("productInformation.txt", PRODUCT_ID_PK, productID);
+	
+	if (updateProduct != NULL) {
+		// Retrieve the struct values and update quantity
+		struct productInfo* dbProduct = getProductStruct(updateProduct->current);
+		dbProduct->unitPrice = newPrice;
+		if (dbProduct->unitPrice <= 0) {
+			// Validation failed (non-positive quantity)
+			updateSuccess = -2;
+		}
+		else {
+			// Add a delimiter to the end of productID
+			char id[BUFF_SIZE + 1];
+			sprintf(id, "%s|", productID);
+			
+			// Get a string represenation of the record with the new quantity
+			char* newRow = getProductDB(id, dbProduct->productDesc, dbProduct->sellerID,
+				dbProduct->quantityAvailable, dbProduct->unitPrice);
+			
+			// Update the quantity of the product in productInformation
+			updateSuccess = update("productInformation.txt", newRow, PRODUCT_ID_PK, productID);
+			
+			// Free the malloced string data after writing
+			free(newRow);
+		}
+		
+		// Free dbProduct and updateProduct
+		free(dbProduct);
+		free(updateProduct);
+	}
+	else {
+		// Failure
+		updateSuccess = -1;
+	}
+		
 	return updateSuccess;
 }
 
@@ -924,6 +974,56 @@ char* viewProductsBuyer(char* productID) {
     return stringBuilder;
 }
 
+char* viewAllProductsBuyer() {
+	// Select and display information for all available products
+	FILE* fDB = fopen("productInformation.txt", "r");
+	
+	// Buffers
+	char getVal[BUFF_SIZE];
+	Record* products = (Record*) malloc(sizeof(Record));
+	Record* head = products;
+	
+	// Initialize getVal with the first row
+	fgets(getVal, BUFF_SIZE, fDB);
+	
+	// Check each row
+	while (getVal[0] != '\0') {
+		// Store the current row
+		products->current = (char*) malloc(sizeof(char) * strlen(getVal));
+		strcpy(((char*) products->current), getVal);
+		
+		// Move to the next product row
+		products->next = (Record*) malloc(sizeof(Record));
+		products->next->prev = products;
+		products = products->next;
+		fgets(getVal, BUFF_SIZE, fDB);
+	}
+	
+	// Convert to a string
+	char* productsString = buildRecordsString(products, 5);
+	
+	// Free the records
+	while (products != NULL && products->current != NULL) {
+		// Free the row's data
+		if (products->next == NULL) {
+			free(products->current);
+			free(products);
+			products = NULL;
+			products->next = NULL;
+		}
+		else {
+			// Advance
+			products = products->next;
+			
+			// Free the previous node
+			free(products->prev->current);
+			free(products->prev);
+		}
+	}
+	
+	return productsString;
+}
+
 void extractColumn(Record* records, int extCol, Record* outRecords, int cols) {
 	// Buffer for the current DB row
 	char getVal[BUFF_SIZE];
@@ -986,6 +1086,7 @@ Record* selectLoop(Record* searchRecords, const char* tbl, int searchCol) {
 
 	while (searchRecords != NULL && searchRecords->current != NULL) {
 		Record* curRecords = rselect(tbl, searchCol, (char*) (searchRecords->current));
+		
 		// Free the row's data
 		if (searchRecords->next == NULL || searchRecords->next->current == NULL) {
 			free(searchRecords->current);
