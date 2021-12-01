@@ -16,7 +16,7 @@ void* threadHandle(void* data) {
     return NULL;
 }
 
-int main(int argc, char **argv) {
+int main() {
     printf("Ideal output: %d\n", 2 * LOOP_COUNT);
 
     for(int i = 0; i < 10; i++) {

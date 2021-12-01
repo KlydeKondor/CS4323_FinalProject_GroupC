@@ -1,46 +1,20 @@
-//HunterHolstead.c
-//Client
+//Client.c
 //Hunter Holstead
 
+#include <assert.h>
 #include <stdio.h>
+#include "HunterHolstead.h"
+#include "socketConnection.h"
+#include "serverToDataserverAPI.h"
 
-//Structs for sellerInformation, customerInformation, productInformation, billingInformation
-struct sellerInformation
-{
-	int sellerID;
-	char sellerName[100];
-	char contactNumber[100];
-	char contactAddress[100];
-};
-
-struct customerInformation
-{
-	int customerID;
-	char customerName[100];
-	char contactNumber[100];
-	char contactAddress[100];
-};
-
-struct productInformation
-{
-	int productID;
-	char productDescription[100];
-	int sellerID;
-	int productQuantity;
-	float productPrice;
-};
-
-struct billingInformation
-{
-	int orderID;
-	int customerID;
-	char customerContactAddress[100];
-	float totalOrderPrice;
-};
-
+/*1. sellerInformation database to store sellers’ information (Seller ID, Seller Name, Contact Number, 
+Seller’s Contact Address) 
+• Seller ID: ID number of a seller,  
+• Seller Name: first and last name of the seller,  
+• Contact Number: 10-digits contact number of the seller in the form XXX-XXX-XXXX,  
+• Seller’s Contact Address: contact address of the seller */
 void setSellerInformation()
-{ 
-
+{
 	struct sellerInformation SI; 
 
 	//They don't set SellerID it must be sequential
@@ -66,6 +40,11 @@ void setSellerInformation()
    printf("\nYour seller ID is: %d ", SI.sellerID);
 }
 
+/*2. customerInformation database to store customers’ information (Customer ID, Customers Name, Contact Number, Customer’s Contact Address) 
+• Customer ID: ID number of a customer,  
+• Customers Name: first and last name of the customer,  
+• Contact Number: 10-digits contact number of the seller in the form XXX-XXX-XXXX,  
+• Customer’s Contact Address: contact address of the customer */
 void setCustomerInformation() 
 {
 
@@ -95,7 +74,55 @@ void setCustomerInformation()
 	
 }
 
-void seeBillingInformation() 
+/*3. productInformation  database  contains  information  about  the  product  (Product  ID,  Product 
+Description, Seller ID, Product Quantity Available, Product Price) 
+• Product ID: ID number of a product,  
+• Product Description: name of the product,  
+• Seller ID: ID of the seller who is selling the product,  
+• Product Quantity Available: number of quantity available,  
+• Product Price: price per unit */
+void setProductInformation() 
+{
+	int productID;
+	char productDescription[100];
+	int sellerID;
+	int productQuantity;
+	float productPrice;
+
+   printf("%s\n","Please enter your Product ID:");
+   scanf("%d", &productID);
+   printf( "\nproductID entered: %d ", productID);
+   
+   printf("%s\n","\nPlease enter your Product Description:");
+   scanf("%s", productDescription);
+   printf( "\nproductDescription entered: %s ", productDescription);
+   
+   printf("%s\n","\nPlease enter your Seller ID:");
+   scanf("%d", &sellerID);
+   printf( "\nsellerID entered: %d ", sellerID);
+   
+   printf("%s\n","\nPlease enter the quantity of product available:");
+   scanf("%d", &productQuantity);
+   printf( "\nproductQuantity entered: %d ", productQuantity);
+   
+   /*printf("%s\n","\nPlease enter your Product Price:");
+   scanf("%f", productPrice);
+   printf( "\nproductPrice entered: %f ", productPrice);*/
+   
+   printf("%s\n", "\nProduct Information has been sent to the database."); 
+   //sendToPIDatabase(productID,productDescription,sellerID,productQuantity,productPrice);
+	
+}
+
+/*4. billingInformation database contains information for the billing purpose (Order ID, Customer ID, 
+Customer’s Billing Address, Total Order Price) 
+• Order ID: ID number of the order,  
+• Customer ID: ID of the customer who made the order,  
+• Customer’s  Billing Address:  Same  as  customer’s  contact  address  from 
+customerInformation database  
+• Total  Order  Price:  total  order  price  i.e.  summation  of  all  the  items  that  customer  has 
+purchased on that particular order */
+void setBillingInformation()
 {
 	int orderID;
 	int customerID;
@@ -125,44 +152,45 @@ void seeBillingInformation()
 }
 
 //• allow the clients to register in the system, 
-void CheckID()
+_Noreturn void RunClient(struct socket_t* serverSocket)
 {
 	int clientType;
 	int seller;
 	int buyer;
+	int ID;
 	
 	while(1)
 	{
-		printf("%s\n", "Please enter your user ID to login, if you are not registered enter -1:");
+		printf("%s\n", "Please enter 0 if you are a Seller or 1 if you are a Buyer. If you are not registered enter -1:");
 		scanf("%d", &clientType);
 		
-		runSellerClient();
-		runBuyerClient();
-		registerClient();
-		//rselect(clientType)
-		/*if(rselect(clientType) == seller)
+		if(clientType == 0)
 		{
-			runSellerClient();
+			printf("%s\n", "Please enter your User ID:");
+			scanf("%d", &ID);
+			runSellerClient(ID, serverSocket);
 		}
-		if(rselect(clientType) == buyer)
+		else if(clientType == 1)
 		{
-			runBuyerClient();
+			printf("%s\n", "Please enter your User ID:");
+			scanf("%d", &ID);
+			runBuyerClient(ID, serverSocket);
 		}
 		else
 		{
 			registerClient();
-		}*/
+		}
 	}
 }
 
-void runBuyerClient()
+void runBuyerClient(int ID, struct socket_t* serverSocket)
 {
 	int input;
 	int loop = 1;
 	
 	while(loop == 1)
 	{
-		//PrintProductInformation()
+        getAllProductInformation(serverSocket);
 		printf("%s\n", "Hello Buyer, enter 1 to update your information, 2 to purchase a product, 3 to return a product"); //This is a test for Product Information
 		printf("%s\n", " 4 to see your Billing Information, 5 to look at your orders or 6 to exit");
 		scanf("%d", &input);
@@ -185,7 +213,7 @@ void runBuyerClient()
 		}
 		else if(input == 5)
 		{
-			//showOrders();
+			//ViewOrderBuyer();
 		}
 		else if(input == 6)
 		{
@@ -199,13 +227,18 @@ void runBuyerClient()
 	}
 }
 
-void runSellerClient()
+void runSellerClient(int ID, struct socket_t* serverSocket)
 {
 	int input;
 	int loop = 1;
+	int inputID = ID;
+	char sellerID[50];
+	
+	sprintf(sellerID,"%d",inputID);
 	
 	while(loop == 1)
 	{
+		printf("%s\n", sellerID);
 		//PrintProductInformation()
 		printf("%s\n", "Hello Seller, enter 1 to update your information, 2 to add a product, 3 to remove a product"); //This is a test for Product Information
 		printf("%s\n", "4 to set a product's quanitity, 5 to set a product's price, 6 to see orders on your product, or 7 to exit");
@@ -233,7 +266,7 @@ void runSellerClient()
 		}
 		else if(input == 6)
 		{
-			//seeOrders();
+			//ViewOrderSeller();
 		}
 		else if(input == 7)
 		{
@@ -273,12 +306,14 @@ void registerClient()
 			printf("%s\n", "You did not enter a correct response");
 		}
 	}
-
 }
 
-int main()
-{
-	CheckID();
-	
-	return 0;
+void getAllProductInformation(struct socket_t* serverSocket) {
+    assert(serverSocket != NULL);
+
+    // Get all product information
+    writeSocket(serverSocket, GET_ALL_PRODUCTS);
+    char buffer[MAX_TCP_BUFFER_SIZE];
+    readSocket(serverSocket, buffer);
+    printf("%s", buffer);
 }

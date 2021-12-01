@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "dataServerNetwork.h"
 #include "serverNetwork.h"
 #include "serverToDataserverAPI.h"
@@ -18,20 +19,31 @@
 static int nextRoutingID = 0;
 static struct socket_t* clientSockets[50];
 
-_Noreturn void* clientToDataServerHandle(void* data) {
+void* clientToDataServerHandle(void* data) {
     void** unpackedData = (void**)data;
     int routingID = *(int*) unpackedData[CLIENT_SOCKET_ID];
     struct socket_t* clientSocket = (struct socket_t*) unpackedData[CLIENT_SOCKET];
     struct socket_t* dataServerSocket = (struct socket_t*) unpackedData[SERVER_SOCKET];
 
     while(1) {
-        char buffer[MAX_TCP_BUFFER_SIZE];
+        char buffer[MAX_TCP_BUFFER_SIZE - 64];
         readSocket(clientSocket, buffer);
+
+        if(strcmp(buffer, QUIT) == 0) {
+            break;
+        }
 
         char message[MAX_TCP_BUFFER_SIZE];
         sprintf(message, "%d%s%s", routingID, COMMAND_DELIMITER, buffer);
         writeSocket(dataServerSocket, message);
     }
+
+    free(unpackedData[CLIENT_SOCKET_ID]);
+    freeSocket(unpackedData[CLIENT_SOCKET]);
+    freeSocket(unpackedData[SERVER_SOCKET]);
+    free(data);
+
+    return NULL;
 }
 
 _Noreturn void* DataServerToClientHandle(void* data) {
@@ -49,23 +61,7 @@ _Noreturn void* DataServerToClientHandle(void* data) {
     }
 }
 
-void* threadSpawnHandle(void* data) {
-    pthread_t clientToDataServerThread;
-
-    pthread_create(&clientToDataServerThread, NULL, clientToDataServerHandle, data);
-    pthread_join(clientToDataServerThread, NULL);
-
-    void** unpackedData = (void**)data;
-    struct socket_t* clientSocket = (struct socket_t*) unpackedData[CLIENT_SOCKET];
-    struct socket_t* serverSocket = (struct socket_t*) unpackedData[SERVER_SOCKET];
-    freeSocket(clientSocket);
-    freeSocket(serverSocket);
-    free(data);
-
-    return NULL;
-}
-
-int main(int argc, char **argv) {
+_Noreturn int main(int argc, char **argv) {
     seedRand();
     // Parse server port
     if(argc < 1) {
@@ -98,13 +94,15 @@ int main(int argc, char **argv) {
         struct socket_t* acceptedSocket = acceptSocket(serverSocket);
 
         void** packedData = malloc(sizeof(void*) * PACKED_DATA_SIZE);
-        packedData[CLIENT_SOCKET_ID] = nextRoutingID;
+        int* value = malloc(sizeof(int));
+        *value = nextRoutingID;
+        packedData[CLIENT_SOCKET_ID] = value;
         clientSockets[nextRoutingID] = acceptedSocket;
         nextRoutingID++;
         packedData[CLIENT_SOCKET] = acceptedSocket;
         packedData[SERVER_SOCKET] = dataServerSocket;
 
         pthread_t clientServerThread;
-        pthread_create(&clientServerThread, NULL, threadSpawnHandle, packedData);
+        pthread_create(&clientServerThread, NULL, clientToDataServerHandle, packedData);
     }
 }

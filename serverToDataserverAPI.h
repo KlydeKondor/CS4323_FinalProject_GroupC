@@ -11,6 +11,7 @@
 #define COMMAND_DELIMITER "$|$"
 #define COMMAND_SUCCESS "|SUCCESS|"
 #define COMMAND_FAILURE "|FAILURE|"
+#define QUIT "|QUIT|"
 
 #define REGISTER_CUSTOMER "|REGISTER_CUSTOMER|"
 #define UPDATE_CUSTOMER "|UPDATE_CUSTOMER_INFO|"
@@ -24,28 +25,10 @@
 #define UPDATE_BILLING_INFO "|UPDATE_BILLING_INFO|"
 #define ADD_ORDER "|ADD_ORDER|"
 #define GET_SELLER_PRODUCTS "|GET_SELLER_PRODUCTS|"
+#define GET_ALL_PRODUCTS "|GET_ALL_PRODUCTS|"
 #define GET_PRODUCT_INFO "|GET_PRODUCT_INFO|"
 #define GET_SELLER_ORDERS "|GET_SELLER_ORDERS|"
 #define GET_BUY_ORDERS "|GET_BUY_ORDERS|"
 #define GET_BILLING_INFO "|GET_BILLING_INFO|"
-
-/*
-bool registerNewCustomer(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
-bool updateCustomerInfo(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
-bool registerNewSeller(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
-bool updateSellerInfo(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
-bool addNewProduct(struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price);
-bool updateProduct(struct socket_t* dataServerSocket, int productID, char* productDescription, char* sellerID, int quantity, float price);
-bool deleteProduct(struct socket_t* dataServerSocket, int productID);
-bool updateProductQuantity(struct socket_t* dataServerSocket, int productID, int quantity);
-bool updateProductPrice(struct socket_t* dataServerSocket, int productID, float price);
-bool updateBillingInfo(struct socket_t* dataServerSocket, int orderID, int clientID, char* address, float totalPrice);
-bool addCustomerOrder(struct socket_t* dataServerSocket, int orderID, int productID, int quantity, char* address, float totalPrice);
-char* getAllSellerProducts(struct socket_t* dataServerSocket, int clientID);
-char* getProductInfo(struct socket_t* dataServerSocket, int productID);
-char* getAllSellerOrders(struct socket_t* dataServerSocket, int clientID);
-char* getAllBuyOrders(struct socket_t* dataServerSocket, int clientID);
-char* getBillingInfo(struct socket_t* dataServerSocket, int clientID);
-*/
 
 #endif //CS4323_FINALPROJECT_GROUPC_SERVERTODATASERVERAPI_H
