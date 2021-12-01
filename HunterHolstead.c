@@ -2,48 +2,9 @@
 //Hunter Holstead
 
 #include <stdio.h>
-#include <stdlib.h>
-#include "serverNetwork.h"
+#include "HunterHolstead.h"
 #include "socketConnection.h"
 #include "serverToDataserverAPI.h"
-#include "util.h"
-
-
-//Structs for sellerInformation, customerInformation, productInformation, billingInformation
-struct sellerInformation
-{
-	int sellerID;
-	char sellerName[100];
-	char contactNumber[100];
-	char contactAddress[100];
-};
-
-struct customerInformation
-{
-	int customerID;
-	char customerName[100];
-	char contactNumber[100];
-	char contactAddress[100];
-};
-
-struct productInformation
-{
-	int productID;
-	char productDescription[100];
-	int sellerID;
-	int productQuantity;
-	float productPrice;
-};
-
-struct billingInformation
-{
-	int orderID;
-	int customerID;
-	char customerContactAddress[100];
-	float totalOrderPrice;
-};
-
-
 
 /*1. sellerInformation database to store sellers’ information (Seller ID, Seller Name, Contact Number, 
 Seller’s Contact Address) 
@@ -161,7 +122,7 @@ Customer’s Billing Address, Total Order Price)
 customerInformation database  
 • Total  Order  Price:  total  order  price  i.e.  summation  of  all  the  items  that  customer  has 
 purchased on that particular order */
-void seeBillingInformation() 
+void setBillingInformation()
 {
 	int orderID;
 	int customerID;
@@ -191,7 +152,7 @@ void seeBillingInformation()
 }
 
 //• allow the clients to register in the system, 
-void CheckID()
+void RunClient(struct socket_t* socket)
 {
 	int clientType;
 	int seller;
@@ -219,19 +180,6 @@ void CheckID()
 		{
 			registerClient();
 		}
-		//rselect(clientType)
-		/*if(rselect(clientType) == seller)
-		{
-			runSellerClient();
-		}
-		if(rselect(clientType) == buyer)
-		{
-			runBuyerClient();
-		}
-		else
-		{
-			registerClient();
-		}*/
 	}
 }
 
@@ -368,83 +316,4 @@ void registerClient()
 			printf("%s\n", "You did not enter a correct response");
 		}
 	}
-
 }
-
-/*
-int main(int argc, char **argv) {
-    seedRand();
-    // Parse server port
-    if(argc < 1) {
-        printf("Port argument missing\nUsage: ./client.out <port>\n");
-        exit(1);
-    }
-
-    long port;
-    char* other;
-    if((port = strtol(argv[0], &other, 10)) == 0) {
-        if(port > (1 << 16)) { //Max port: 65536
-            printf("Port outside of valid range 0 < port < 65536\n");
-            exit(1);
-        }
-    }
-
-    // Connect to the server
-    struct socket_t* dataServerSocket = mallocSocket(SERVER_ADDRESS, port);
-    connectSocket(dataServerSocket, 5, 2);
-	
-	CheckID();
-	
-	return 0;
-}*/
-
-
-int main()
-{
-	CheckID()
-	
-	return 0;
-}
-
-/* Future Plans
-//Buyer
-ClientID = 0 //consumer (buys the products)
-//• allow the clients to update the information in the system: o both buyers and sellers can change their personal information 
-UpdateClientInfo() 
-//o buyers can purchase the product or return the product 
-PurchaseProduct()
-ReturnProduct()
-//o buyers can look at the quantity of their product available and its price. 
-//o sellers can look at the quantity of their products available and its price. 
-getQuantity()
-getPrice()
-//o buyers can look at their orders. 
-getBoughtOrders()
-//o buyers can look at their billing information
-getBillingInformation()
-//----------------------------------------------------------------------------
-//Seller
-ClientID = 1 //seller (lists the products)
-//• allow the clients to register in the system, 
-// Same as client
-RegisterClient()
-//• allow the clients to update the information in the system: o both buyers and sellers can change their personal information 
-// Same as client
-UpdateClientInfo() 
-//o sellers can add a new product or remove a product 
-AddProduct()
-RemoveProduct()
-//o sellers can add or subtract the quantity of the product already existing in the database, including the price of the product 
-ChangeQuantity() 
-ChangePrice()
-//• allow the clients to see all the relevant information from the productInformation, billingInformation and customerOrder database. 
-getProductInformation()
-getBillingInformation()
-getCustomerOrder()
-//o buyers can look at the quantity of their product available and its price. 
-//o sellers can look at the quantity of their products available and its price. 
-getQuantity()
-getPrice()
-//o sellers can look at all the customers’ order belonging to his products. 
-getSoldOrders()
-*/
