@@ -14,11 +14,19 @@ Compiles just the data server
 ```commandline
 make dataServer
 ```
+OR
+```commandline
+gcc -o dataServer.out dataServer_main.c michael_somdecerff.c -lpthread -lrt -std=c11
+```
 
 ## Server
 Compiles just the server
 ```commandline
 make server
+```
+OR
+```commandline
+gcc -o server.out server_main.c michael_somdecerff.c -lpthread -lrt -std=c11
 ```
 
 ## Client
@@ -26,8 +34,14 @@ Compiles just the client
 ```commandline
 make client
 ```
+OR
+```commandline
+gcc -o client.out client_main.c michael_somdecerff.c HunterHolstead.c -lpthread -lrt -std=c11
+```
 
 # Running
+In order to run correctly, the data server MUST be launched first, the servers MUST be launched second, and the clients MUST be launched third. 
+
 ## Data Server
 ```commandline
 ./dataServer.out
