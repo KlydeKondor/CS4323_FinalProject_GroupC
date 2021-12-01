@@ -143,7 +143,7 @@ _Noreturn void* serverListenHandle(void* data) {
         }
         else if(strcmp(command, GET_ALL_PRODUCTS) == 0) {
             printf("Getting all products\n");
-            char* info = viewAllProductsBuyer();
+            char* info = viewAllProducts();
             writeOther(clientServerSocket, routingID, info);
             free(info);
         }
