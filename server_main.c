@@ -25,7 +25,7 @@ _Noreturn void* clientToDataServerHandle(void* data) {
     struct socket_t* dataServerSocket = (struct socket_t*) unpackedData[SERVER_SOCKET];
 
     while(1) {
-        char buffer[MAX_TCP_BUFFER_SIZE];
+        char buffer[MAX_TCP_BUFFER_SIZE - 64];
         readSocket(clientSocket, buffer);
 
         char message[MAX_TCP_BUFFER_SIZE];
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
         struct socket_t* acceptedSocket = acceptSocket(serverSocket);
 
         void** packedData = malloc(sizeof(void*) * PACKED_DATA_SIZE);
-        packedData[CLIENT_SOCKET_ID] = nextRoutingID;
+        packedData[CLIENT_SOCKET_ID] = &nextRoutingID;
         clientSockets[nextRoutingID] = acceptedSocket;
         nextRoutingID++;
         packedData[CLIENT_SOCKET] = acceptedSocket;
