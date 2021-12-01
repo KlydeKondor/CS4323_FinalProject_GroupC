@@ -58,6 +58,7 @@ void* threadSpawnHandle(void* data) {
     void** unpackedData = (void**)data;
     struct socket_t* clientSocket = (struct socket_t*) unpackedData[CLIENT_SOCKET];
     struct socket_t* serverSocket = (struct socket_t*) unpackedData[SERVER_SOCKET];
+    free(unpackedData[0]);
     freeSocket(clientSocket);
     freeSocket(serverSocket);
     free(data);
@@ -98,7 +99,9 @@ int main(int argc, char **argv) {
         struct socket_t* acceptedSocket = acceptSocket(serverSocket);
 
         void** packedData = malloc(sizeof(void*) * PACKED_DATA_SIZE);
-        packedData[CLIENT_SOCKET_ID] = &nextRoutingID;
+        int* value = malloc(sizeof(int));
+        *value = nextRoutingID;
+        packedData[CLIENT_SOCKET_ID] = value;
         clientSockets[nextRoutingID] = acceptedSocket;
         nextRoutingID++;
         packedData[CLIENT_SOCKET] = acceptedSocket;
