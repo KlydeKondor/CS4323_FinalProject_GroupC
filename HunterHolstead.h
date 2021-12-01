@@ -37,7 +37,7 @@ void setSellerInformation();
 void setCustomerInformation();
 void setProductInformation();
 void setBillingInformation();
-void RunClient(struct socket_t* socket);
+void RunClient(struct socket_t* serverSocket);
 void runBuyerClient(int ID);
 void runSellerClient(int ID);
 void registerClient();

@@ -152,7 +152,7 @@ void setBillingInformation()
 }
 
 //• allow the clients to register in the system, 
-void RunClient(struct socket_t* socket)
+_Noreturn void RunClient(struct socket_t* serverSocket)
 {
 	int clientType;
 	int seller;
