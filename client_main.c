@@ -8,19 +8,12 @@
 int main(int argc, char **argv) {
     seedRand();
     // Parse server port
-    if(argc < 1) {
+    if(argc < 2) {
         printf("Port argument missing\nUsage: ./client.out <port>\n");
         exit(1);
     }
 
-    long port;
-    char* other;
-    if((port = strtol(argv[0], &other, 10)) == 0) {
-        if(port > (1 << 16)) { //Max port: 65536
-            printf("Port outside of valid range 0 < port < 65536\n");
-            exit(1);
-        }
-    }
+    int port = atoi(argv[1]);
 
     // Connect to the server
     struct socket_t* serverSocket = mallocSocket(SERVER_ADDRESS, port);

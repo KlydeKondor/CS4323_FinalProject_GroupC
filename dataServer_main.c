@@ -38,6 +38,8 @@ _Noreturn void* serverListenHandle(void* data) {
         char buffer[MAX_TCP_BUFFER_SIZE];
         readSocket(clientServerSocket, buffer);
 
+        printf("Read server traffic: %s\n", buffer);
+
         int count;
         char** split = str_split(buffer, COMMAND_DELIMITER, &count);
 
@@ -47,6 +49,8 @@ _Noreturn void* serverListenHandle(void* data) {
         if(count > 2) {
             packetData = split[DATA_INDEX];
         }
+
+        printf("Command: %s\n", command);
 
         if(strcmp(command, REGISTER_CUSTOMER) == 0) {
             int success = registerClient(packetData, 1);
@@ -138,9 +142,10 @@ _Noreturn void* serverListenHandle(void* data) {
             free(info);
         }
         else if(strcmp(command, GET_ALL_PRODUCTS) == 0) {
-            //char* info = getAllProducts();
-            //writeOther(clientServerSocket, routingID, info);
-            //free(info);
+            printf("Getting all products\n");
+            char* info = viewAllProductsBuyer();
+            writeOther(clientServerSocket, routingID, info);
+            free(info);
         }
         else if(strcmp(command, GET_PRODUCT_INFO) == 0) {
             char* info = viewProductsBuyer(packetData);
@@ -161,6 +166,9 @@ _Noreturn void* serverListenHandle(void* data) {
             char* info = viewBillingInfo(packetData);
             writeOther(clientServerSocket, routingID, info);
             free(info);
+        }
+        else {
+            writeFailure(clientServerSocket, routingID);
         }
 
         for(int i = 0; i < count; i++) {

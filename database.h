@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "michael_somdecerff.c"
 //#include "socketConnection.h"
 //#include "util.h"
 
