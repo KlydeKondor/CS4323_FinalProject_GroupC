@@ -772,13 +772,13 @@ int updateClient(char* registerData, int isCustomer) {
 	return rowsAffected;
 }
 
-int addProduct(char* productDesc, char* sellerID, int quantity, float price) {
+int addProduct(char* productInfo) {
 	int addSuccess = 0;
 	
 	// Insert into productInformation
-	char* newProduct = getProductDB("", productDesc, atoi(sellerID), quantity, price);
-	addSuccess = insert("productInformation.txt", newProduct);
-	free(newProduct);
+	//char* newProduct = getProductDB("", productDesc, atoi(sellerID), quantity, price);
+	//addSuccess = insert("productInformation.txt", newProduct);
+	//free(newProduct);
 	
 	return addSuccess;
 }
@@ -788,9 +788,13 @@ int removeProduct(char* productID) {
 	return drop("productInformation.txt", 0, productID);
 }
 
-int updateQuantity(char* productID, int change) {
+int updateQuantity(char* productInfo) {
 	int updateSuccess = 0;
-	
+
+    // PARSE HERE
+    char* productID;
+    int change;
+
 	// Select the productID from the DB to get the current quantity
 	Record* updateProduct = rselect("productInformation.txt", PRODUCT_ID_PK, productID);
 	
@@ -836,11 +840,12 @@ int updateQuantity(char* productID, int change) {
 	return updateSuccess;
 }
 
-int updatePrice(char* productID, float newPrice) {
+int updatePrice(char* productInfo) {
 	int updateSuccess = 0;
 	
 	// Update the quantity or price of a product in productInformation
-	
+    char* productID;
+    float newPrice;
 	
 	return updateSuccess;
 }

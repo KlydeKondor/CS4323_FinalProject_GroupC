@@ -29,6 +29,7 @@
 #define GET_BUY_ORDERS "|GET_BUY_ORDERS|"
 #define GET_BILLING_INFO "|GET_BILLING_INFO|"
 
+/*
 bool registerNewCustomer(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
 bool updateCustomerInfo(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
 bool registerNewSeller(struct socket_t* dataServerSocket, int clientID, char* clientName, char* clientNumber, char* clientAddress);
@@ -45,5 +46,6 @@ char* getProductInfo(struct socket_t* dataServerSocket, int productID);
 char* getAllSellerOrders(struct socket_t* dataServerSocket, int clientID);
 char* getAllBuyOrders(struct socket_t* dataServerSocket, int clientID);
 char* getBillingInfo(struct socket_t* dataServerSocket, int clientID);
+*/
 
 #endif //CS4323_FINALPROJECT_GROUPC_SERVERTODATASERVERAPI_H

@@ -82,23 +82,44 @@ _Noreturn void* serverListenHandle(void* data) {
             }
         }
         else if(strcmp(command, ADD_PRODUCT) == 0) {
-            // TODO
-            writeFailure(clientServerSocket, routingID);
+            int success = addProduct(packetData);
+            if(success == 0) {
+                writeSuccess(clientServerSocket, routingID);
+            }
+            else {
+                writeFailure(clientServerSocket, routingID);
+            }
         }
         else if(strcmp(command, UPDATE_PRODUCT) == 0) {
             // TODO
             writeFailure(clientServerSocket, routingID);
         }
         else if(strcmp(command, DELETE_PRODUCT) == 0) {
-            // TODO
-            writeFailure(clientServerSocket, routingID);
+            int success = removeProduct(packetData);
+            if(success == 0) {
+                writeSuccess(clientServerSocket, routingID);
+            }
+            else {
+                writeFailure(clientServerSocket, routingID);
+            }
         }
         else if(strcmp(command, UPDATE_PRODUCT_QUANTITY) == 0) {
-            writeFailure(clientServerSocket, routingID);
+            int success = updateQuantity(packetData);
+            if(success == 0) {
+                writeSuccess(clientServerSocket, routingID);
+            }
+            else {
+                writeFailure(clientServerSocket, routingID);
+            }
         }
         else if(strcmp(command, UPDATE_PRODUCT_PRICE) == 0) {
-            // TODO
-            writeFailure(clientServerSocket, routingID);
+            int success = updatePrice(packetData);
+            if(success == 0) {
+                writeSuccess(clientServerSocket, routingID);
+            }
+            else {
+                writeFailure(clientServerSocket, routingID);
+            }
         }
         else if(strcmp(command, UPDATE_BILLING_INFO) == 0) {
             // TODO

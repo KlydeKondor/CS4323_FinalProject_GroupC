@@ -22,6 +22,6 @@ int main(int argc, char **argv) {
     }
 
     // Connect to the server
-    struct socket_t* dataServerSocket = mallocSocket(SERVER_ADDRESS, port);
-    connectSocket(dataServerSocket, 5, 2);
+    struct socket_t* serverSocket = mallocSocket(SERVER_ADDRESS, port);
+    connectSocket(serverSocket, 5, 2);
 }
