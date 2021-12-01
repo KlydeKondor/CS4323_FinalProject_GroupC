@@ -7,6 +7,30 @@
 // Kyle: Test cases for Kyle
 #include "database.h"
 
+static void writeOther(struct socket_t* socket, char* routingID, char* other) {
+    assert(socket != NULL);
+    assert(routingID != NULL);
+    assert(other != NULL);
+
+    char buffer[MAX_TCP_BUFFER_SIZE];
+    sprintf(buffer, "%s%s%s", routingID, COMMAND_DELIMITER, other);
+    writeSocket(socket, buffer);
+}
+
+static void writeSuccess(struct socket_t* socket, char* routingID) {
+    assert(socket != NULL);
+    assert(routingID != NULL);
+
+    writeOther(socket, routingID, COMMAND_SUCCESS);
+}
+
+static void writeFailure(struct socket_t* socket, char* routingID) {
+    assert(socket != NULL);
+    assert(routingID != NULL);
+
+    writeOther(socket, routingID, COMMAND_FAILURE);
+}
+
 _Noreturn void* serverListenHandle(void* data) {
     struct socket_t* clientServerSocket = (struct socket_t*) data;
 
@@ -17,93 +41,96 @@ _Noreturn void* serverListenHandle(void* data) {
         int count;
         char** split = str_split(buffer, COMMAND_DELIMITER, &count);
 
-        if(count < 2) {
-            writeSocket(clientServerSocket, COMMAND_FAILURE);
-            continue;
-        }
-
-        char* command = split[0];
+        char* routingID = split[ROUTING_ID_INDEX];
+        char* command = split[COMMAND_INDEX];
+        char* packetData = split[DATA_INDEX];
 
         if(strcmp(command, REGISTER_CUSTOMER) == 0) {
-            int success = registerClient(split[1], 1);
+            int success = registerClient(packetData, 1);
             if(success == 0) {
-                writeSocket(clientServerSocket, COMMAND_SUCCESS);
+                writeSuccess(clientServerSocket, routingID);
             }
             else {
-                writeSocket(clientServerSocket, COMMAND_FAILURE);
+                writeFailure(clientServerSocket, routingID);
             }
         }
         else if(strcmp(command, UPDATE_CUSTOMER) == 0) {
-            int success = updateClient(split[1], 1);
+            int success = updateClient(packetData, 1);
             if(success == 0) {
-                writeSocket(clientServerSocket, COMMAND_SUCCESS);
+                writeSuccess(clientServerSocket, routingID);
             }
             else {
-                writeSocket(clientServerSocket, COMMAND_FAILURE);
+                writeFailure(clientServerSocket, routingID);
             }
         }
         else if(strcmp(command, REGISTER_SELLER) == 0) {
-            int success = registerClient(split[1], 0);
+            int success = registerClient(packetData, 0);
             if(success == 0) {
-                writeSocket(clientServerSocket, COMMAND_SUCCESS);
+                writeSuccess(clientServerSocket, routingID);
             }
             else {
-                writeSocket(clientServerSocket, COMMAND_FAILURE);
+                writeFailure(clientServerSocket, routingID);
             }
         }
         else if(strcmp(command, UPDATE_SELLER) == 0) {
-            int success = updateClient(split[1], 0);
+            int success = updateClient(packetData, 0);
             if(success == 0) {
-                writeSocket(clientServerSocket, COMMAND_SUCCESS);
+                writeSuccess(clientServerSocket, routingID);
             }
             else {
-                writeSocket(clientServerSocket, COMMAND_FAILURE);
+                writeFailure(clientServerSocket, routingID);
             }
         }
         else if(strcmp(command, ADD_PRODUCT) == 0) {
-            writeSocket(clientServerSocket, COMMAND_FAILURE);
+            // TODO
+            writeFailure(clientServerSocket, routingID);
         }
         else if(strcmp(command, UPDATE_PRODUCT) == 0) {
-            writeSocket(clientServerSocket, COMMAND_FAILURE);
+            // TODO
+            writeFailure(clientServerSocket, routingID);
         }
         else if(strcmp(command, DELETE_PRODUCT) == 0) {
-            writeSocket(clientServerSocket, COMMAND_FAILURE);
+            // TODO
+            writeFailure(clientServerSocket, routingID);
         }
         else if(strcmp(command, UPDATE_PRODUCT_QUANTITY) == 0) {
-            writeSocket(clientServerSocket, COMMAND_FAILURE);
+            writeFailure(clientServerSocket, routingID);
         }
         else if(strcmp(command, UPDATE_PRODUCT_PRICE) == 0) {
-            writeSocket(clientServerSocket, COMMAND_FAILURE);
+            // TODO
+            writeFailure(clientServerSocket, routingID);
         }
         else if(strcmp(command, UPDATE_BILLING_INFO) == 0) {
-            writeSocket(clientServerSocket, COMMAND_FAILURE);
+            // TODO
+            writeFailure(clientServerSocket, routingID);
         }
         else if(strcmp(command, ADD_ORDER) == 0) {
-            writeSocket(clientServerSocket, COMMAND_FAILURE);
+            // TODO
+            writeFailure(clientServerSocket, routingID);
         }
         else if(strcmp(command, GET_SELLER_PRODUCTS) == 0) {
-            char* info = viewProductsSeller(split[1]);
+            char* info = viewProductsSeller(packetData);
             writeSocket(clientServerSocket, info);
             free(info);
         }
         else if(strcmp(command, GET_PRODUCT_INFO) == 0) {
-            char* info = viewProductsBuyer(split[1]);
-            writeSocket(clientServerSocket, info);
+            char* info = viewProductsBuyer(packetData);
+            writeOther(clientServerSocket, routingID, info);
             free(info);
         }
         else if(strcmp(command, GET_SELLER_ORDERS) == 0) {
-            char* info = viewOrdersSeller(split[1]);
-            writeSocket(clientServerSocket, info);
+            char* info = viewOrdersSeller(packetData);
+            writeOther(clientServerSocket, routingID, info);
             free(info);
         }
         else if(strcmp(command, GET_BUY_ORDERS) == 0) {
-            char* info = viewOrdersBuyer(split[1]);
-            writeSocket(clientServerSocket, info);
+            char* info = viewOrdersBuyer(packetData);
+            writeOther(clientServerSocket, routingID, info);
             free(info);
         }
         else if(strcmp(command, GET_BILLING_INFO) == 0) {
-            char* info = viewBillingInfo(split[1]);
-            writeSocket(clientServerSocket, info);
+            char* info = viewBillingInfo(packetData);
+            writeOther(clientServerSocket, routingID, info);
             free(info);
         }
 

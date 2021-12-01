@@ -6,16 +6,21 @@
 #include "serverToDataserverAPI.h"
 #include "socketConnection.h"
 #include "util.h"
-
-// Kyle: Test cases for Hunter
 #include "HunterHolstead.h"
 
-#define PACKED_DATA_SIZE 2
-#define CLIENT_SOCKET 0
-#define SERVER_SOCKET 1
+#define RETURN_DATA_INDEX 1
 
-void* clientToDataServerHandle(void* data) {
+#define PACKED_DATA_SIZE 3
+#define CLIENT_SOCKET_ID 0
+#define CLIENT_SOCKET 1
+#define SERVER_SOCKET 2
+
+static int nextRoutingID = 0;
+static struct socket_t* clientSockets[50];
+
+_Noreturn void* clientToDataServerHandle(void* data) {
     void** unpackedData = (void**)data;
+    int routingID = *(int*) unpackedData[CLIENT_SOCKET_ID];
     struct socket_t* clientSocket = (struct socket_t*) unpackedData[CLIENT_SOCKET];
     struct socket_t* dataServerSocket = (struct socket_t*) unpackedData[SERVER_SOCKET];
 
@@ -23,11 +28,25 @@ void* clientToDataServerHandle(void* data) {
         char buffer[MAX_TCP_BUFFER_SIZE];
         readSocket(clientSocket, buffer);
 
-        // Handling of client traffic to the server will go here
-        // RegisterClient(); This appears to be for client input, this should go on the client_main not the server
+        char message[MAX_TCP_BUFFER_SIZE];
+        sprintf(message, "%d%s%s", routingID, COMMAND_DELIMITER, buffer);
+        writeSocket(dataServerSocket, message);
     }
+}
 
-    return NULL;
+_Noreturn void* DataServerToClientHandle(void* data) {
+    struct socket_t* dataServerSocket = (struct socket_t *) data;
+
+    while(1) {
+        char buffer[MAX_TCP_BUFFER_SIZE];
+        readSocket(dataServerSocket, buffer);
+
+        int count;
+        char** split = str_split(buffer, COMMAND_DELIMITER, &count);
+
+        int routingID = atoi(split[ROUTING_ID_INDEX]);
+        writeSocket(clientSockets[routingID], split[RETURN_DATA_INDEX]);
+    }
 }
 
 void* threadSpawnHandle(void* data) {
@@ -71,11 +90,17 @@ int main(int argc, char **argv) {
     bindSocket(serverSocket);
     listenSocket(serverSocket, 3);
 
+    pthread_t dataServerListen;
+    pthread_create(&dataServerListen, NULL, DataServerToClientHandle, dataServerSocket);
+
     while(1) {
         // Accept incoming server connection and pass it off to a thread
         struct socket_t* acceptedSocket = acceptSocket(serverSocket);
 
         void** packedData = malloc(sizeof(void*) * PACKED_DATA_SIZE);
+        packedData[CLIENT_SOCKET_ID] = nextRoutingID;
+        clientSockets[nextRoutingID] = acceptedSocket;
+        nextRoutingID++;
         packedData[CLIENT_SOCKET] = acceptedSocket;
         packedData[SERVER_SOCKET] = dataServerSocket;
 
