@@ -15,5 +15,11 @@ raceConditionBroken:
 raceConditionFixed:
 	gcc -o raceConditionFixed.out GROUPC_2/RaceConditions_Main.c -lpthread -lrt -std=c11
 
+deadlockBroken:
+	gcc -o deadlockBroken.out GROUPC_3/Deadlock_Main.c -lpthread -lrt -std=c11
+
+deadlockFixed:
+	gcc -o deadlockFixed.out GROUPC_4/Deadlock_Main.c -lpthread -lrt -std=c11
+
 clean:
 	rm *.out
