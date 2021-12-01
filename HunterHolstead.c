@@ -187,20 +187,10 @@ void runBuyerClient(int ID, struct socket_t* serverSocket)
 {
 	int input;
 	int loop = 1;
-
-    getAllProductInformation(serverSocket);
 	
 	while(loop == 1)
 	{
-		//printf("%s\n", buyerID);
-		
-		char buffer[MAX_TCP_BUFFER_SIZE];
-		char* command = GET_PRODUCT_INFO;
-		sprintf(buffer, "%s%s%d", command, COMMAND_DELIMITER, ID);
-		//printf("%s\n", buffer);
-		
-		
-		//PrintProductInformation()
+        getAllProductInformation(serverSocket);
 		printf("%s\n", "Hello Buyer, enter 1 to update your information, 2 to purchase a product, 3 to return a product"); //This is a test for Product Information
 		printf("%s\n", " 4 to see your Billing Information, 5 to look at your orders or 6 to exit");
 		scanf("%d", &input);
